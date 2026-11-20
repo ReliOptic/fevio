@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
-    "verify:real-medication-input": "node scripts/verify-real-medication-e2e.mjs"
+    "verify:real-medication-input": "node scripts/verify-real-medication-e2e.mjs",
+    "test:db": "vitest run tests/db"
   },
   "dependencies": {
     "@supabase/ssr": "0.10.3",
@@ -28,8 +29,10 @@
   "devDependencies": {
     "@playwright/test": "1.59.1",
     "@types/node": "latest",
+    "@types/pg": "^8.11.10",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "pg": "^8.13.1",
     "typescript": "latest",
     "vitest": "4.1.5"
   },

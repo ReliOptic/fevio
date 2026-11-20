@@ -70,6 +70,32 @@ visit_rebooked           새 시간 합의 시에만: 이전 시간 → 새 시�
 - 확정된 방문만 배우자 투영과 사용자 캘린더로 나간다. 협의 중인 방문은 배우자에게 "시간 맞추는 중"으로만 보인다.
 - 시술 날짜 이벤트(`decision_resolved`, 채취 `visit_scheduled`)는 이 흐름으로 만들 수 없다. 서버에서 `visitId.kind = procedure`면 `visit_times_proposed`를 거부한다.
 
+## 4-1. 구현과 검증 (2026-11-20)
+
+- 마이그레이션: `supabase/migrations/202611200001_visit_booking.sql`
+  - 표: `visit_requests`, `visit_proposals`, `visit_bookings`, `visit_booking_events`, `clinic_resource_slots`, `clinics`, `clinic_staff`, `clinic_patients`
+  - 쓰기는 RPC로만 한다: `visit_offer_window`, `visit_send_hope`, `visit_propose`, `visit_assign_in_hope`, `visit_accept_proposal`
+  - 읽기 모델: `visit_unconfirmed_demand`(요청당 1행), `clinic_slot_usage`(확정 예약만 정원을 씀, 열린 제안은 따로 셈)
+- 상태: `needs_time` → `assign_needed`(환자 희망 받음 · 병원 차례) → `patient_reply`(병원 제안 · 환자 차례) → `confirmed`
+  - `assign_needed`와 `patient_reply`는 모두 미확정 수요에 남는다.
+- 확정은 두 길뿐이다: 환자가 제안을 수락하거나, 병원이 환자가 보낸 희망 안의 자리를 배정할 때.
+  - 둘 다 자리 행을 잠그고(`for update`) 정원을 다시 센다.
+- 수락이 거절되면 오류를 던지지 않고 결과(`{ok:false, reason}`)를 돌려준다. 그래서 거절 자체가 기록되고, 요청은 `assign_needed`로 돌아간다.
+  - `proposal_not_open`: 이미 처리됐거나 새 제안으로 바뀐 제안
+  - `proposal_expired`: 만료된 제안
+  - `slot_taken`: 그사이 자리가 찬 경우
+  - 어느 경우든 기존 예약은 그대로다.
+- 변경 요청 중에는 기존 예약이 `active`로 남는다. 새 예약이 생기는 같은 트랜잭션 안에서만 `replaced`가 된다.
+- 열어 둔 화면이 오래됐으면 `p_expected_version`이 다르다. 이때 조작은 `visit_request_stale_version`으로 거절된다.
+- 검증: `FEVIO_TEST_DATABASE_URL=postgres://… npm run test:db`. 로컬 Postgres 16에서 12건 통과(5회 반복).
+  - 환자와 병원이 각자 따로 연결한다.
+  - 새로고침은 연결을 닫고 새로 여는 것으로 흉내 낸다.
+  - 동시 수락은 연결 두 개로 실제 동시에 실행한다.
+- 아직 안 한 것:
+  - 원격 Supabase에 마이그레이션 적용
+  - 앱 화면을 RPC에 연결
+  - 만료 제안을 주기적으로 정리하는 작업 (지금은 수락 시점에 판정)
+
 ## 5. 아직 모르는 것
 
 1. 병원이 '허용 시간대'를 매번 열어 줄 수 있는가. 판독·채혈 순서 때문에 환자에게 시간을 고르게 하기 어려운 병원도 있을 수 있다.
