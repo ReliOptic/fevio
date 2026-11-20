@@ -87,6 +87,7 @@ type LedgerEvent<T extends EventType = EventType> = {
 | 투약 | `dose_window_opened`, `dose_recorded`, `dose_snoozed`, `dose_missed_reported`, `dose_corrected` | 시스템 / 환자 / 배우자(허용 시) |
 | 결정점 | `decision_point_opened`, `decision_result_expected`, `decision_resolved` (갈래, 근거: 임상 / 일정 포함) | 병원 |
 | 진료 | `visit_scheduled`, `visit_moved`, `visit_done`, `pre_visit_brief_sent` | 병원 / 환자 |
+| 방문 협의 | `visit_window_offered`, `visit_times_proposed`, `visit_time_countered`, `visit_booked`, `visit_rebooked` (`docs/specs/visit-scheduling.md`) | 병원 / 환자 |
 | 연구실 | `lab_update_published` (수정, 배양 일수, 동결) | 병원 |
 | 문의 | `ticket_opened` (증상·질문·수치), `ticket_answered`, `ticket_sla_breached`, `alert_rule_matched` | 환자 / 직원 / 시스템 규칙 |
 | 선호 | `share_scope_set`, `result_protection_set`, `notify_offsets_set`, `region_set`, `preference_noted` ("밤 9시 이후 통화 어려움") | 환자 |
