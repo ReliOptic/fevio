@@ -50,7 +50,7 @@ async function type(root, sel, text) {
   await wait(320);
 }
 async function say(fevioText) { await type(PT(), '#f3ask', fevioText); await tap(PT(), 'button[aria-label="보내기"]'); }
-function caption(day, text) { DEMO.day = day; DEMO.caption = text; drawBar(); }
+function caption(day, text) { DEMO.day = day; DEMO.caption = text; drawBar(); var sb = document.getElementById('subtitle'); if (sb) { sb.classList.remove('in'); void sb.offsetWidth; sb.textContent = text; sb.classList.add('in'); } }
 async function goTab(name) { await tap(PT(), 'div[style*="1fr auto 1fr"] button', name); await wait(300); }
 async function closeCurtain() { if (app.u.curtain) { await tap(PT(), 'button[aria-label="Fevio 닫기"]'); await wait(500); } }
 async function openFevio() { await tap(PT(), 'button[aria-label="Fevio 열기"], button[aria-label="예약하기 · Fevio 열기"]'); await wait(400); }
@@ -111,170 +111,154 @@ function pouchSVG() {
     + '<rect x="96" y="300" width="56" height="40" rx="6" fill="#FFFFFF" opacity=".9"/><rect x="104" y="308" width="40" height="6" rx="3" fill="#D4D4D8"/></svg>');
 }
 async function browserHandoff() {
-  var f = (label, val, pasted) => '<div class="bf"><span>' + label + '</span><b>' + escH(val) + '</b>' + (pasted ? '<i>붙여 넣음</i>' : '') + '</div>';
-  showLayer('<div class="br"><div class="br-back">◀ Fevio</div><div class="br-page"><div class="br-progress"></div><div class="br-body">'
-    + '<span class="br-kick">지원 신청</span><h3>난임부부 시술비 지원 신청</h3><div class="br-steps"><b>1 신청 정보</b><span>2 서류</span><span>3 확인</span></div>'
-    + f('신청인', '서연', true) + f('사는 곳', '서울 마포구', true) + f('시술 병원', '서울OO난임센터', true)
-    + '<div class="bf"><span>첨부</span><b>난임진단서</b><em>파일 선택</em></div><div class="br-btn">다음</div></div></div>'
+  // The app only links out. The demo shows the phone opening the site and coming back.
+  showLayer('<div class="br"><div class="br-back">◀ Fevio</div><div class="br-page"><div class="br-progress"></div><div class="br-skel"><i class="w60"></i><i class="w90 tall"></i><i class="w40"></i><i class="card"></i><i class="card"></i><i class="w70"></i></div></div>'
     + '<div class="br-bar"><span class="br-aa">가가</span><span class="br-url"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.4" stroke-linecap="round"><path d="M6 11h12v9H6zM9 11V8a3 3 0 016 0v3"/></svg>www.gov.kr</span><span class="br-aa">↻</span></div>'
     + '<div class="br-tools"><span>‹</span><span>›</span><span>⇪</span><span>▢</span><span>⧉</span></div></div>');
-  await wait(400); layer().querySelector('.br').classList.add('loaded'); await wait(4200);
-  await tap(layer(), '.br-back'); await hideLayer(); await wait(500);
+  await wait(300); layer().querySelector('.br').classList.add('loaded'); await wait(2600);
+  await tap(layer(), '.br-back'); await hideLayer(); await wait(400);
 }
 var SCENES = [
-  { t: '흩어진 안내', run: async () => {
-    caption('시작하기 전', '시험관 주기 동안 병원 안내는 종이, 문자, 전화로 흩어지고, 둘이 따로 기억해요.');
+  { t: '시작', run: async () => {
+    caption('시작하기 전', '시험관 주기 동안 병원 안내는 종이, 문자, 전화로 흩어지고 둘이 따로 기억해요.');
     await stage('illo', 'scatter'); await wait(4200);
   } },
-  { t: '1일째 · 시작', run: async () => {
-    setClock(1, '09:10'); app.startOnboarding(); await stage('solo');
-    caption('1일째 · ' + mmdd(1) + ' 09:10', '처음 열면 Fevio가 먼저 말을 걸어요. 오늘 화면에는 IVF 일곱 단계가 이미 놓여 있어요.');
-    await wait(1600);
-    await tap(PT(), null, '동의하고 시작');
-    caption('1일째 · ' + mmdd(1) + ' 09:11', '지금 단계를 고르면 일곱 단계 위에 내 위치가 표시돼요.');
-    await tap(PT(), null, '시작 전이에요'); await wait(600);
+  { t: '1일째 · 진료실', run: async () => {
+    setClock(1, '09:40');
+    caption('1일째 · 월 ' + mmdd(1) + ' 09:40', '첫 진료에서 주사 안내문을 받았어요. 사진으로 찍어 둬요.');
+    await stage('illo', 'clinic'); await wait(3600);
   } },
-  { t: '1일째 · 안내문 찍기', run: async () => {
-    await stage('illo-phone', 'clinic');
-    caption('1일째 · ' + mmdd(1) + ' 09:12', '진료 때 받은 안내문을 찍어 둔 사진이 있으면, 갤러리에서 고르기만 하면 돼요. 입력할 건 없어요.');
-    await wait(2600);
+  { t: '1일째 · 시작하기', run: async () => {
+    setClock(1, '10:20'); app.startOnboarding(); await stage('solo');
+    caption('1일째 · ' + mmdd(1) + ' 10:20', 'Fevio를 열면 IVF 일곱 단계가 먼저 보여요. 동의하고 지금 단계만 고르면 돼요.');
+    await wait(1600); await tap(PT(), null, '동의하고 시작'); await tap(PT(), null, '시작 전이에요'); await wait(500);
+    caption('1일째 · ' + mmdd(1) + ' 10:21', '아까 찍은 안내문을 갤러리에서 골라요. 입력할 건 없어요.');
     var lines = ['주사  고나엘에프 150 · 메노푸어 75', '매일 저녁 21:00', '피검사  ' + mmdd(3) + ' 08:00 채혈실', '초음파  ' + mmdd(5) + ' 08:30 본관 3층', '채취일은 초음파 보고 안내드립니다'];
     await photoFlow('album', paperSVG('과배란 주사 안내', lines, '문의 02-1234-5678'), ['주사: 고나엘에프 150 · 메노푸어 75 매일 21:00', '피검사: ' + mmdd(3) + ' 08:00 채혈실', '다음 내원: ' + mmdd(5) + ' 08:30 초음파·피검사', '미정: 채취일 — 초음파 보고 안내'], {});
+    caption('1일째 · ' + mmdd(1) + ' 10:22', 'Fevio가 날짜와 시간만 골라 보여 줘요. 맞으면 한 번 눌러 저장해요.');
+    await wait(1400); await stage('duo'); await tap(PT(), null, '맞아요'); await wait(2000); app.reanchor(true);
+    caption('1일째 · ' + mmdd(1) + ' 10:22', '저장하는 순간 민준 폰에도 같은 일정이 생겨요.'); await wait(2200);
+  } },
+  { t: '1일째 · 병원 연결', run: async () => {
     await stage('solo');
-    caption('1일째 · ' + mmdd(1) + ' 09:13', 'Fevio가 사진에서 날짜와 시간만 골라 보여 줘요. 맞으면 한 번 누르면 끝이에요.');
-    await wait(1000); await stage('duo'); await tap(PT(), null, '맞아요'); await wait(2200); app.reanchor(true); await wait(1200);
-    caption('1일째 · ' + mmdd(1) + ' 09:14', '다니는 병원은 나 화면에서 검색해 등록해요. 등록하면 코디네이터 카드와 몸이 불편할 때 연락처로 쓰여요.');
-    await stage('solo'); await tap(PT(), 'button[aria-label="나 · 설정"]'); await wait(500);
-    await tap(PT(), 'div[data-on-click]', '등록하기'); await wait(600);
-    await type(PT(), '#f3-hs', '난임'); await wait(900);
-    await tap(PT(), 'div[data-on-click]', '서울OO난임센터'); await wait(1300);
-    await tap(PT(), 'button', '이 병원으로 등록'); await wait(1200);
-    caption('1일째 · ' + mmdd(1) + ' 09:15', '저장한 일정은 민준 폰에도 바로 보여요. 투약까지 보여 줄지는 서연이 정해요.');
-    await tap(PT(), 'button[role="radio"]', '흐름+투약'); await wait(800);
-    await tap(PT(), 'button[aria-label="뒤로"]'); await stage('duo'); await wait(600);
+    caption('1일째 · ' + mmdd(1) + ' 10:24', '다니는 병원을 등록하면 병원과 연결돼요. 투약까지 민준에게 보일지도 여기서 정해요.');
+    await tap(PT(), 'button[aria-label="나 · 설정"]'); await wait(400);
+    await tap(PT(), 'div[data-on-click]', '등록하기'); await wait(400);
+    await type(PT(), '#f3-hs', '난임'); await wait(700);
+    await tap(PT(), 'div[data-on-click]', '서울OO난임센터'); await wait(1100);
+    await tap(PT(), 'button', '이 병원으로 등록'); await wait(900);
+    await tap(PT(), 'button[role="radio"]', '흐름+투약'); await wait(700);
+    await tap(PT(), 'button[aria-label="뒤로"]'); await wait(500);
   } },
   { t: '1일째 · 첫 주사', run: async () => {
-    setClock(1, '18:40'); app.render(); app.reanchor(true); await stage('illo-duo', 'evening');
-    caption('1일째 · ' + mmdd(1) + ' 18:40', '주사까지 남은 시간은 링이 천천히 줄어들며 보여 줘요. 민준 폰에도 같은 링이 떠요.');
-    await wait(2600);
-    setClock(1, '20:18'); app.render(); await stage('solo');
-    caption('1일째 · ' + mmdd(1) + ' 20:18', '한 시간 전부터는 투약 화면으로 바뀌어요. 무엇을 얼마나 맞는지 병원 안내 그대로예요.');
-    await wait(2600);
-    setClock(1, '20:58'); app.render();
-    caption('1일째 · ' + mmdd(1) + ' 20:58', '맞고 나서 한 번 누르면 기록돼요.');
-    await wait(1600); await tap(PT(), null, '맞았어요'); app.reanchor(true); await stage('duo'); await wait(1800);
+    setClock(1, '20:40'); app.render(); app.reanchor(true); await stage('illo-duo', 'evening');
+    caption('1일째 · ' + mmdd(1) + ' 20:40', '주사 시각이 다가오면 링이 천천히 줄어들어요. 민준 폰에도 같은 링이 떠요.');
+    await wait(3400);
+    setClock(1, '20:58'); app.render(); await stage('solo');
+    caption('1일째 · ' + mmdd(1) + ' 20:58', '한 시간 전부터는 무엇을 얼마나 맞는지 큰 화면으로 보여 줘요. 맞고 나서 한 번 눌러요.');
+    await wait(2200); await tap(PT(), null, '맞았어요'); app.reanchor(true); await stage('duo'); await wait(1800);
   } },
-  { t: '3일째 · 일정과 메모', run: async () => {
-    setClock(3, '13:20'); caption('3일째 · ' + mmdd(3) + ' 13:20', '일정 탭은 날짜별 기록이에요. 고른 날이 펼쳐지고, 일정에 맞는 생활 광고가 한 줄 조용히 들어가요.');
-    await stage('illo-duo', 'office'); await goTab('일정'); await wait(2600); await stage('duo');
+  { t: '3일째 · 회사에서', run: async () => {
+    setClock(3, '13:20'); await stage('illo-duo', 'office');
+    caption('3일째 · ' + mmdd(3) + ' 13:20', '오전 반차로 피검사를 다녀왔어요. 일정 탭 그날에 메모를 남기고 민준에게 보이게 해요.');
+    await goTab('일정'); await wait(2400); await stage('duo');
     await tap(PT(), 'button', '메모'); await wait(300);
-    await type(PT(), '#f3-memo', '오후 반차 냈어');
-    caption('3일째 · ' + mmdd(3) + ' 13:21', '메모는 기본으로 나만 봐요. 민준에게 보이게 켜면 바로 떠요.');
+    await type(PT(), '#f3-memo', '오전 반차 쓰고 피검사 다녀옴');
     await tap(PT(), 'button[role="switch"]', '에게 보이기');
     await tap(PT(), 'button[type="submit"]', '저장'); await wait(2400);
-    caption('3일째 · ' + mmdd(3) + ' 13:22', '민준 폰에 메모가 보이면, 서연 쪽에 "민준 봄"이 붙어요.');
-    await wait(2000);
+    caption('3일째 · ' + mmdd(3) + ' 13:21', '민준 폰에 메모가 보이면 서연 쪽에 "민준 봄"이 붙어요.'); await wait(2000);
   } },
   { t: '3일째 · 함께', run: async () => {
-    setClock(3, '21:40'); caption('3일째 · ' + mmdd(3) + ' 21:40', '함께 탭은 커뮤니티가 먼저예요. 같은 단계 사람들 글 사이에 광고가 글 모양 그대로 들어가요.');
+    setClock(3, '21:40'); await stage('solo');
     put('posts/demo-a', { text: '주사 맞고 배 더부룩한 거 다들 그랬나요? 저는 3일째부터 그랬어요', nick: '하늘맘', stage: '과배란 주사', topic: 'all', imgs: [], likes: 12, replies: 4, createdAt: nowMs() - 3600e3 });
     put('posts/demo-b', { text: '반차 두 번째인데 팀장님께 뭐라고 하셨어요?', nick: '봄비', stage: '과배란 주사', topic: 'work', imgs: [], likes: 8, replies: 6, createdAt: nowMs() - 1800e3 });
-    await stage('solo'); await goTab('함께'); await wait(1800);
-    caption('3일째 · ' + mmdd(3) + ' 21:42', '글에 사진도 갤러리에서 바로 넣어요.');
-    var url = pouchSVG();
-    DEMO.pick = () => {};
-    await tap(PT(), 'button[aria-label="사진 넣기"]');
-    await albumPick(url, '주사 파우치 사진', true);
+    caption('3일째 · ' + mmdd(3) + ' 21:40', '함께 탭에서는 같은 단계 사람들과 이야기해요. 사진도 갤러리에서 바로 넣어요.');
+    await goTab('함께'); await wait(1400);
+    var url = pouchSVG(); DEMO.pick = () => {};
+    await tap(PT(), 'button[aria-label="사진 넣기"]'); await albumPick(url, '주사 파우치 사진', true);
     var blob = new Blob([decodeURIComponent(url.split(',')[1])], { type: 'image/svg+xml' });
-    app.setState({ postFiles: [{ file: blob, url: url }] }); await wait(600);
+    app.setState({ postFiles: [{ file: blob, url: url }] }); await wait(500);
     await type(PT(), '#f3post', '주사 들고 출근하는 날은 이렇게 챙겨요');
-    await tap(PT(), 'button[type="submit"]', '올리기'); await wait(2200);
+    await tap(PT(), 'button[type="submit"]', '올리기'); await wait(2000);
   } },
   { t: '3일째 · 정부지원', run: async () => {
-    caption('3일째 · ' + mmdd(3) + ' 21:45', '정부지원 탭은 이번 주기에 챙길 지원만 보여요. 시술 전에 필요한 건 파랗게 표시돼요.');
-    await tap(PT(), 'button[role="tab"]', '정부지원'); await wait(1400);
-    await tap(PT(), 'div[data-on-click]', '난임부부 시술비 지원'); await wait(1600);
-    caption('3일째 · ' + mmdd(3) + ' 21:46', '신청 정보를 복사해 두고, 휴대폰 브라우저로 정부24 신청 페이지를 열어요. 붙여 넣기만 하면 돼요.');
-    await tap(PT(), 'button', '신청 정보 복사'); await wait(500);
-    await stage('illo-phone', 'gov'); await wait(1200);
-    await tap(PT(), 'a', '신청 페이지 열기', true);
-    await browserHandoff(); await stage('solo');
-    caption('3일째 · ' + mmdd(3) + ' 21:48', '돌아오면 신청했다고 표시해 둬요. 회사에 낼 난임치료휴가 글도 일정에서 만들어 줘요.');
-    await tap(PT(), 'button', '신청했어요'); await wait(800);
-    await tap(PT(), 'div[data-on-click]', '난임치료휴가'); await wait(900);
-    await tap(PT(), 'button', '휴가 신청 글 만들기'); await wait(2400);
-    await closeCurtain(); await tap(PT(), 'button[role="tab"]', '커뮤니티'); await wait(300);
+    caption('3일째 · ' + mmdd(3) + ' 21:44', '정부지원 탭은 이번 주기에 챙길 지원만 보여요. 시술 전에 필요한 건 파랗게 표시돼요.');
+    await tap(PT(), 'button[role="tab"]', '정부지원'); await wait(1200);
+    await tap(PT(), 'div[data-on-click]', '난임부부 시술비 지원'); await wait(1500);
+    caption('3일째 · ' + mmdd(3) + ' 21:45', '신청은 정부24에서 해요. 누르면 휴대폰 브라우저로 바로 넘어가요.');
+    await tap(PT(), 'a', '정부24에서 신청', true); await browserHandoff();
+    caption('3일째 · ' + mmdd(3) + ' 21:50', '돌아와서 신청했다고 표시해 두면, 다음에 다시 챙기지 않아도 돼요.');
+    await tap(PT(), 'button', '신청했어요'); await wait(2600);
   } },
-  { t: '5일째 · 병원이 보낸 계획', run: async () => {
-    setClock(5, '10:40'); await toToday(); await stage('illo-duo', 'plan'); await wait(1600);
-    caption('5일째 · ' + mmdd(5) + ' 10:40', '초음파 뒤 병원이 계획을 보내면 오늘 화면에 카드로 와요. 서연은 확인만 누르면 돼요.');
-    app.receivePlan('다음 내원: ' + mmdd(6) + ' 09:20 초음파·피검사\n주사: 변경 없음 · 매일 21:00\n미정: 채취일 — 다음 검사 뒤 안내');
-    await wait(2600); await tap(PT(), null, '확인했어요'); await wait(1200);
-    await stage('duo');
-    caption('5일째 · ' + mmdd(5) + ' 10:41', '민준 폰의 같은 카드에는 "서연 확인함"이 붙어요.');
-    await wait(2200);
-  } },
-  { t: '6일째 · 예약하기', run: async () => {
-    setClock(6, '07:40'); caption('6일째 · ' + mmdd(6) + ' 07:40', '일정 탭에서는 Fevio 버튼이 "예약하기"가 돼요. 시간을 바꾸고 싶으면 병원에 보낼 글을 만들어 줘요.');
-    await stage('solo'); await goTab('일정'); await wait(500);
+  { t: '4일째 · 예약하기', run: async () => {
+    setClock(4, '21:30'); await stage('solo'); await goTab('일정'); await wait(400);
+    caption('4일째 · ' + mmdd(4) + ' 21:30', '내일 08:30 초음파와 회의가 겹쳤어요. 일정 탭의 "예약하기"로 시간을 바꿔 달라고 해요.');
     await openFevio();
     await tap(PT(), 'button', '진료 시간을 바꾸고 싶어요');
-    await tap(PT(), 'button', '더 늦은 시간'); await wait(1000);
-    await tap(PT(), 'button', '복사하고 보냄으로 표시'); await wait(900);
-    caption('6일째 · ' + mmdd(6) + ' 07:41', '병원이 바꾸기 전까지 지금 시간은 그대로예요. 일정에는 "병원 답 기다림"이 붙어요.');
+    await tap(PT(), 'button', '더 늦은 시간'); await wait(1600);
+    caption('4일째 · ' + mmdd(4) + ' 21:31', '연결된 병원의 코디네이터에게 바로 가요. 바뀌기 전까지 지금 시간은 그대로예요.');
     await closeCurtain(); await wait(1600);
   } },
-  { t: '6일째 · 트리거', run: async () => {
-    setClock(6, '11:05'); await stage('duo'); await toToday();
-    caption('6일째 · ' + mmdd(6) + ' 11:05', '오늘 밤 트리거로 정해졌어요. 계획이 오면 지금 위치가 트리거로 넘어가고, 정각까지 링이 줄어들어요.');
-    app.receivePlan('트리거: ' + mmdd(6) + ' 22:00 정각\n주사: 오늘로 끝\n채취: ' + mmdd(8) + ' 07:30 · 전날 24시부터 금식 · 보호자 동반');
-    await wait(2400); await tap(PT(), null, '확인했어요'); await wait(1600);
-    setClock(6, '21:20'); app.render(); await stage('illo-duo', 'night'); await wait(1400);
-    caption('6일째 · ' + mmdd(6) + ' 21:20', '민준도 자기 폰에서 Fevio에게 물어요. 답은 서연이 공유한 일정에서만 나와요.');
-    await tap(PR(), 'button[aria-label="Fevio 열기"]'); await wait(400);
-    await tap(PR(), 'button', '내가 챙길 건?'); await wait(2400);
-    await tap(PR(), 'button[aria-label="Fevio 닫기"]'); await wait(500);
+  { t: '5일째 · 병원 답', run: async () => {
+    setClock(5, '08:10'); await stage('duo'); app.render();
+    var it = D.items.find((x) => x.date === dayStr(5) && x.kind === 'visit'), rq = D.reqs[0];
+    if (it) put('items/' + it.id, { time: '10:00', updatedAt: nowMs() }, true); if (rq) put('reqs/' + rq.id, { status: 'done', doneAt: nowMs() }, true);
+    app.say('병원이 오늘 초음파를 10:00으로 바꿨어요');
+    caption('5일째 · ' + mmdd(5) + ' 08:10', '병원이 10:00으로 바꿔 줬어요. 두 폰의 일정이 함께 바뀌어요.'); await wait(3000);
   } },
-  { t: '8일째 · 문자 캡처', run: async () => {
+  { t: '5일째 · 진료 뒤 계획', run: async () => {
+    setClock(5, '11:30'); await toToday(); await stage('illo-duo', 'plan');
+    caption('5일째 · ' + mmdd(5) + ' 11:30', '초음파 뒤 병원이 정한 계획이 오늘 화면에 카드로 와요. 서연은 확인만 눌러요.');
+    app.receivePlan('다음 내원: ' + mmdd(6) + ' 09:20 초음파·피검사\n주사: 변경 없음 · 매일 21:00\n미정: 채취일 — 다음 검사 뒤 안내');
+    await wait(2400); await stage('duo'); await tap(PT(), null, '확인했어요'); await wait(1000);
+    caption('5일째 · ' + mmdd(5) + ' 11:31', '민준 폰의 같은 카드에는 "서연 확인함"이 붙어요.'); await wait(2000);
+  } },
+  { t: '6일째 · 트리거', run: async () => {
+    setClock(6, '11:05'); app.render(); app.reanchor(true);
+    caption('6일째 · ' + mmdd(6) + ' 11:05', '오늘 밤 트리거로 정해졌어요. 지금 위치가 트리거로 넘어가고, 정각까지 링이 줄어들어요.');
+    app.receivePlan('트리거: ' + mmdd(6) + ' 22:00 정각\n주사: 오늘로 끝\n채취: ' + mmdd(8) + ' 07:30 · 전날 24시부터 금식 · 보호자 동반');
+    await wait(2200); await tap(PT(), null, '확인했어요'); await wait(1400);
+    setClock(6, '21:20'); app.render(); await stage('illo-duo', 'night');
+    caption('6일째 · ' + mmdd(6) + ' 21:20', '민준도 자기 폰의 Fevio에게 물어요. 답은 서연이 공유한 일정에서만 나와요.');
+    await wait(1000); await tap(PR(), 'button[aria-label="Fevio 열기"]'); await wait(400);
+    await tap(PR(), 'button', '내가 챙길 건?'); await wait(2400);
+    await tap(PR(), 'button[aria-label="Fevio 닫기"]'); await wait(400);
+  } },
+  { t: '8일째 · 채취 뒤', run: async () => {
     setClock(8, '13:30'); app.render(); app.reanchor(true); await stage('illo-phone', 'recovery');
-    caption('8일째 · ' + mmdd(8) + ' 13:30', '채취가 끝났어요. 회복실에서 받은 안내문은 그 자리에서 찍으면 돼요.');
-    await wait(1000); await openFevio();
+    caption('8일째 · ' + mmdd(8) + ' 13:30', '채취가 끝났어요. 회복실에서 받은 안내문은 그 자리에서 찍어요.');
+    await wait(1400); await openFevio();
     await tap(PT(), 'button[aria-label="사진·파일 넣기"]'); await wait(300);
     var paper = ['수정 결과 연락  ' + mmdd(9) + ' 09:40', '연구실에서 전화드립니다', '이식일은 배아 상태 보고 안내드립니다', '오늘은 무리하지 말고 쉬세요'];
     await photoFlow('camera', paperSVG('채취 후 안내', paper, '연구실 02-1234-5679'), ['연구실 연락: ' + mmdd(9) + ' 09:40 수정 확인', '미정: 이식일 — 배아 상태 보고 안내'], {});
-    await tap(PT(), null, '맞아요'); await wait(2200); app.reanchor(true); await wait(1000);
+    await stage('solo'); await tap(PT(), null, '맞아요'); await wait(2000); app.reanchor(true);
   } },
   { t: '8일째 · 일정 한눈에', run: async () => {
-    setClock(8, '13:40'); await stage('duo'); await goTab('일정'); await wait(600);
-    caption('8일째 · ' + mmdd(8) + ' 13:40', '일정은 이번 사이클이 한눈에 보여요. 투약, 검사, 트리거, 채취, 연구실 연락이 날짜별로 쌓여요.');
-    await tap(PT(), 'button[aria-label="지난 주"]'); await wait(1800);
-    caption('8일째 · ' + mmdd(8) + ' 13:41', '지난 날은 기록이 돼요. 맞은 주사, 남긴 메모, 병원에 보낸 요청이 그날에 남아요.');
-    await tap(PT(), 'div[data-on-click]', '피검사'); await wait(2000);
-    await tap(PT(), 'button[aria-label="다음 주"]'); await wait(900);
-    caption('8일째 · ' + mmdd(8) + ' 13:42', '시술 날을 펼치면 장소와 준비가 같이 보여요. 민준 폰도 같은 날이 열려요.');
-    await tap(PT(), 'div[data-on-click]', '채취'); await wait(2600);
-    await tap(PT(), 'div[data-on-click]', '연구실'); await wait(2000);
+    setClock(8, '13:40'); await stage('duo'); await goTab('일정'); await wait(500);
+    caption('8일째 · ' + mmdd(8) + ' 13:40', '일정 탭에는 이번 주기가 날짜별로 쌓여요. 지난 주는 맞은 주사와 메모가 남은 기록이에요.');
+    await tap(PT(), 'button[aria-label="지난 주"]'); await wait(1600);
+    await tap(PT(), 'div[data-on-click]', '피검사'); await wait(1800);
+    await tap(PT(), 'button[aria-label="다음 주"]'); await wait(800);
+    caption('8일째 · ' + mmdd(8) + ' 13:41', '이번 주 시술 날을 펼치면 장소와 준비가 같이 보여요. 민준 폰도 같은 날이 열려요.');
+    await tap(PT(), 'div[data-on-click]', '채취'); await wait(2400);
+    await tap(PT(), 'div[data-on-click]', '연구실'); await wait(1800);
   } },
   { t: '9일째 · 몸이 불편할 때', run: async () => {
     setClock(9, '22:10'); app.render(); await stage('illo-phone', 'symptom');
-    caption('9일째 · ' + mmdd(9) + ' 22:10', '몸이 불편하면 Fevio는 판단하지 않고 병원 번호와 119를 바로 보여 줘요.');
-    await openFevio(); await tap(PT(), 'button', '몸이 불편해요');
-    await tap(PT(), 'button', '배가 많이 부르고 아파요'); await wait(2400);
+    caption('9일째 · ' + mmdd(9) + ' 22:10', '배가 아프고 부를 때, Fevio는 판단하지 않고 병원 번호와 119를 바로 보여 줘요.');
+    await wait(1200); await openFevio(); await tap(PT(), 'button', '몸이 불편해요');
+    await tap(PT(), 'button', '배가 많이 부르고 아파요'); await wait(2600);
     await closeCurtain();
   } },
-  { t: '11일째 · 이식과 판정', run: async () => {
+  { t: '11일째 · 이식', run: async () => {
     setClock(11, '09:30'); app.render(); await stage('duo'); await toToday();
     caption('11일째 · ' + mmdd(11) + ' 09:30', '이식 날짜와 판정 날짜가 왔어요. 확인하면 이식 단계로 넘어가요.');
     app.receivePlan('이식: ' + mmdd(11) + ' 14:00\n판정 피검사: ' + mmdd(20) + ' 08:30');
-    await wait(2200); await tap(PT(), null, '확인했어요'); await wait(1600);
-    caption('11일째 · ' + mmdd(11) + ' 09:31', '판정이 있는 주와 판정 단계에는 광고를 넣지 않아요. 일정은 한 달로도 볼 수 있어요.');
-    await goTab('일정'); await tap(PT(), 'button[aria-label="한 달 보기"]'); await wait(2400);
-    await tap(PT(), 'button[aria-label="주 단위로 보기"]'); await wait(700);
-    await goTab('오늘'); app.reanchor(true); await wait(1200);
+    await wait(2200); await tap(PT(), null, '확인했어요'); await wait(2400);
   } },
   { t: '판정 날까지', run: async () => {
-    caption('11일째 · ' + mmdd(11) + ' 14:30', '흩어졌던 안내가 한 화면에 모였고, 둘이 같은 화면을 보며 판정 날까지 왔어요.');
-    await stage('illo-duo', 'together'); await wait(4400);
+    caption('11일째 · ' + mmdd(11) + ' 16:00', '흩어졌던 안내가 한 화면에 모였고, 둘이 같은 화면을 보며 판정 날까지 왔어요.');
+    await stage('illo-duo', 'together'); await wait(4600);
   } }
 ];
 
@@ -283,8 +267,8 @@ async function demoStart() {
   DEMO.real = { D: D, db: db, mem: mem, assets: assets }; assets = null;   // demo pictures never upload
   DEMO.running = true; DEMO.paused = false; DEMO.stop = false; DEMO.scene = -1; DEMO.start = mondayOf(today0());   // the demo cycle starts on a Monday so each week is full
   db = null; mem = {};
-  D = { ready: true, offline: false, settings: { me: '서연', partner: '민준', region: '서울 마포구' }, items: [], rules: [], open: [], plans: [], memos: {}, doses: {}, posts: [], reqs: [], asks: [] };
-  mem = { settings: { main: { me: '서연', partner: '민준', region: '서울 마포구' } } };   // the couple already has accounts; everything else starts empty
+  D = { ready: true, offline: false, settings: { me: '서연', partner: '민준', region: '서울 마포구', nick: '봄날' }, items: [], rules: [], open: [], plans: [], memos: {}, doses: {}, posts: [], reqs: [], asks: [] };
+  mem = { settings: { main: { me: '서연', partner: '민준', region: '서울 마포구', nick: '봄날' } } };   // the couple already has accounts; everything else starts empty
   resetApp(); setClock(1, '09:10'); drawBar(); stageOn(); window.scrollTo({ top: 0, behavior: 'smooth' });
   try {
     for (var i = 0; i < SCENES.length; i++) { DEMO.scene = i; drawBar(); await SCENES[i].run(); }
@@ -308,7 +292,7 @@ function drawBar() {
   bar.innerHTML = '<div class="demo-top"><span class="demo-day num">' + escH(DEMO.day) + '</span><span class="demo-steps">' + SCENES.map((s, i) => '<i class="' + (i < DEMO.scene ? 'd' : (i === DEMO.scene ? 'c' : '')) + '" title="' + escH(s.t) + '"></i>').join('') + '</span>'
     + '<span class="demo-ctl">' + (done ? '' : '<button type="button" id="demo-pause">' + (DEMO.paused ? '계속' : '일시정지') + '</button><button type="button" id="demo-speed" class="num">' + DEMO.speed + 'x</button>')
     + '<button type="button" id="demo-end">' + (done ? '내 일정으로 시작' : '끝내기') + '</button></span></div>'
-    + '<p class="demo-cap" aria-live="polite">' + escH(DEMO.caption) + '</p>';
+    + (done ? '<p class="demo-cap" aria-live="polite">' + escH(DEMO.caption) + '</p>' : '');
 }
 document.addEventListener('click', (e) => {
   var t = e.target.closest('button'); if (!t || !t.id || t.id.indexOf('demo-') !== 0) return;

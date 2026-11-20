@@ -56,6 +56,8 @@ def common(t, role):
                '<sc-if value="{{a.noHref}}" hint-placeholder-val="{{ true }}"><button class="tap" onClick="{{a.tap}}" style="height: 34px; padding: 0 14px; border-radius: 17px; font-size: 12px; font-weight: 800; background: {{a.bg}}; color: {{a.ink}}; box-shadow: {{a.edge}}">{{a.t}}</button></sc-if>'
                '</sc-for></span></sc-if></div></sc-if>')
         t = t[:i] + new + t[j:]
+    t = t.replace('<span style="width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: #F4F4F5; color: #575A62">{{g.who}}</span>',
+                  '<span aria-label="{{g.who}}" style="width: 36px; height: 36px; border-radius: 12px; flex: none; display: grid; place-items: center; background: #F4F4F5"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3F4249" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{g.icon}}"></path></svg></span>')
     t = t.replace('padding: 8px 4px 0 4px">지원 제도</span>', 'padding: 8px 4px 0 4px">이번 주기에 챙길 지원</span>')
     # one native ad row under the day it fits (values are empty for the partner)
     w0 = t.index('<sc-for list="{{wk.days}}"'); d0 = t.index('<div onClick="{{d.tap}}"', w0); d1 = block(t, d0, 'div')
@@ -138,6 +140,8 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 .device::before{content:"";position:absolute;left:-3px;top:150px;width:4px;height:34px;border-radius:2px 0 0 2px;background:#2b2c30;box-shadow:0 56px 0 #2b2c30,0 120px 0 #2b2c30}
 .device::after{content:"";position:absolute;right:-3px;top:210px;width:4px;height:90px;border-radius:0 2px 2px 0;background:#2b2c30}
 .screen{isolation:isolate;transform:translateZ(0)}
+.screen [style*="font-weight: 800"]{font-weight:700!important}
+.screen{word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty}
 .screen div[aria-hidden="true"]{visibility:hidden!important}
 .sb{position:absolute;left:0;right:0;top:0;height:46px;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;box-sizing:border-box;pointer-events:none}
 .sb-t{font-size:15px;font-weight:700;color:#0E0F11;letter-spacing:-.01em}
@@ -147,19 +151,25 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 @keyframes ringgo{to{stroke-dashoffset:var(--c)}}
 @media (prefers-reduced-motion:reduce){.ring-breathe{animation:none}}
 .frame-wrap{position:relative}
-body.demo-stage .phones{position:relative;display:block;margin:0 auto;--s:1}
+body.demo-stage .phones{position:relative;display:block;margin:0 auto;--s:1;border-radius:26px;background:#ECE9E2;box-shadow:inset 0 0 0 1px rgba(27,27,27,.06),0 30px 60px -36px rgba(14,15,17,.35);overflow:hidden}
+.subtitle{display:none}
+body.demo-stage .subtitle{display:block;position:absolute;left:0;right:0;margin:0 auto;width:fit-content;bottom:16px;max-width:88%;box-sizing:border-box;padding:9px 16px;border-radius:10px;background:#1B1B1B;color:#FFFFFF;font:600 17px/1.45 'Pretendard',-apple-system,system-ui,sans-serif;text-align:center;letter-spacing:-.01em;text-wrap:balance;z-index:8}
+body.demo-stage .subtitle.in{animation:subin 420ms ease}
+@keyframes subin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-width:759px){body.demo-stage .subtitle{font-size:14px;bottom:10px;max-width:calc(100% - 20px);padding:8px 12px}}
+body.demo-stage .demo-bar.on{padding:10px 14px}
 body.demo-stage .slot{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 820ms cubic-bezier(.65,0,.35,1),opacity 520ms ease;will-change:transform}
 body.demo-stage .slot .cap{display:none}
-.illo{position:absolute;left:0;top:0;width:0;height:0;opacity:0;pointer-events:none;border-radius:28px;background:#FBF8F1;box-shadow:0 0 0 1px rgba(27,27,27,.08),0 24px 60px -24px rgba(14,15,17,.3);overflow:hidden;transition:left 820ms cubic-bezier(.65,0,.35,1),top 820ms cubic-bezier(.65,0,.35,1),width 820ms cubic-bezier(.65,0,.35,1),height 820ms cubic-bezier(.65,0,.35,1),opacity 500ms ease}
+.illo{position:absolute;left:0;top:0;width:0;height:0;opacity:0;pointer-events:none;border-radius:20px;background:#FBF8F1;box-shadow:0 0 0 1px rgba(27,27,27,.06);overflow:hidden;transition:left 820ms cubic-bezier(.65,0,.35,1),top 820ms cubic-bezier(.65,0,.35,1),width 820ms cubic-bezier(.65,0,.35,1),height 820ms cubic-bezier(.65,0,.35,1),opacity 500ms ease}
 .illo.on{opacity:1}
 .illo svg{display:block;width:100%;height:100%}
-.illo .dr{stroke-dasharray:1;stroke-dashoffset:1;animation:dr 900ms ease forwards;animation-delay:var(--d,0s)}
-@keyframes dr{to{stroke-dashoffset:0}}
-.illo .pp{transform:scale(0);animation:pp 460ms cubic-bezier(.34,1.56,.64,1) forwards;animation-delay:var(--d,0s)}
+.illo .dr{stroke-dasharray:1;stroke-dashoffset:1;fill-opacity:0;animation:dr calc(900ms * var(--ts,1)) ease forwards;animation-delay:calc(var(--d,0s) * var(--ts,1))}
+@keyframes dr{50%{fill-opacity:0}to{stroke-dashoffset:0;fill-opacity:1}}
+.illo .pp{transform:scale(0);animation:pp calc(460ms * var(--ts,1)) cubic-bezier(.34,1.56,.64,1) forwards;animation-delay:calc(var(--d,0s) * var(--ts,1))}
 @keyframes pp{to{transform:scale(1)}}
-.illo .fd{opacity:0;animation:fd 500ms ease forwards;animation-delay:var(--d,0s)}
+.illo .fd{opacity:0;animation:fd calc(500ms * var(--ts,1)) ease forwards;animation-delay:calc(var(--d,0s) * var(--ts,1))}
 @keyframes fd{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.illo .dr,.illo .pp,.illo .fd{animation:none;stroke-dashoffset:0;transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.illo .dr,.illo .pp,.illo .fd{animation:none;stroke-dashoffset:0;fill-opacity:1;transform:none;opacity:1}}
 
 .cam-layer{position:absolute;left:calc(12px * var(--s));top:calc(12px * var(--s));width:calc(360px * var(--s));height:calc(800px * var(--s));border-radius:calc(50px * var(--s));overflow:hidden;z-index:5;transform:translateY(8%);opacity:0;transition:transform 320ms cubic-bezier(.32,.72,0,1),opacity 220ms ease}
 .cam-layer.on{transform:none;opacity:1}
@@ -202,16 +212,12 @@ body.demo-stage .slot .cap{display:none}
 .br-page{flex:1;margin-top:52px;background:#fff;position:relative;overflow:hidden}
 .br-progress{position:absolute;left:0;top:0;height:3px;width:0;background:#1F5BFF;transition:width 700ms ease}
 .br.loaded .br-progress{width:100%;opacity:0;transition:width 1200ms ease,opacity 300ms ease 1200ms}
-.br-body{padding:22px 20px;display:flex;flex-direction:column;gap:12px;opacity:0;transform:translateY(8px);transition:opacity 350ms ease 450ms,transform 350ms ease 450ms;color:#1B1C1F}
-.br.loaded .br-body{opacity:1;transform:none}
-.br-kick{font-size:12px;font-weight:700;color:#6B7280}
-.br-body h3{margin:0;font-size:20px;line-height:1.3}
-.br-steps{display:flex;gap:6px;font-size:11px}.br-steps b,.br-steps span{padding:5px 9px;border-radius:12px;background:#EEF0F3;color:#6B7280}.br-steps b{background:#1B1C1F;color:#fff}
-.bf{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;border:1px solid #DADDE3;position:relative}
-.bf span{font-size:11px;color:#6B7280;font-weight:700}.bf b{font-size:14px}
-.bf i{position:absolute;right:10px;top:10px;font-style:normal;font-size:10px;font-weight:800;color:#1F5BFF;background:rgba(31,91,255,.1);padding:2px 6px;border-radius:6px}
-.bf em{position:absolute;right:10px;top:16px;font-style:normal;font-size:11px;font-weight:700;color:#1B1C1F;border:1px solid #DADDE3;border-radius:6px;padding:3px 8px}
-.br-btn{margin-top:4px;height:46px;border-radius:10px;background:#1B1C1F;color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+.br-skel{padding:22px 18px;display:flex;flex-direction:column;gap:12px;opacity:0;transition:opacity 350ms ease 500ms}
+.br.loaded .br-skel{opacity:1}
+.br-skel i{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,#ECEEF1 0%,#F6F7F9 50%,#ECEEF1 100%);background-size:200% 100%;animation:skel 1.4s linear infinite}
+.br-skel i.w40{width:40%}.br-skel i.w60{width:60%}.br-skel i.w70{width:70%}.br-skel i.w90{width:90%}.br-skel i.tall{height:22px}
+.br-skel i.card{height:64px;border-radius:12px}
+@keyframes skel{from{background-position:100% 0}to{background-position:-100% 0}}
 .br-bar{height:50px;margin:8px 12px 0;border-radius:14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:13px}
 .br-url{display:flex;align-items:center;gap:5px;font-weight:600}
 .br-aa{color:#575A62;font-size:12px}
@@ -250,7 +256,7 @@ html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides"
         '<main class="stage q"><div class="demo-bar idle" id="demo-bar"></div><div class="phones">'
         '<section class="slot" data-who="pt" aria-label="환자 아이폰"><div class="frame-wrap"><div class="frame" id="ph-patient"></div><div class="cam-layer" id="cam-layer" hidden></div></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
         '<section class="slot" data-who="pr" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
-        '<div class="illo" id="illo" aria-live="polite"></div></div></main>\n'
+        '<div class="illo" id="illo"></div><div class="subtitle" id="subtitle" aria-live="polite"></div></div></main>\n'
         '<input id="file-camera" class="sr" type="file" accept="image/*" capture="environment" aria-label="사진 찍기">'
         '<input id="file-album" class="sr" type="file" accept="image/*" aria-label="앨범에서 고르기">'
         '<input id="file-post" class="sr" type="file" accept="image/*" multiple aria-label="글에 넣을 사진">\n'

@@ -364,6 +364,7 @@ class App {
     this.push([fv(label + ' 일정을 조율할게요.\n어떻게 바꾸고 싶으세요?')], { conv: 'resched' });
   }
   draftReq(what, itemId) {
+    if (typeof DEMO !== 'undefined' && DEMO.running) { put('reqs/q' + Date.now().toString(36), { t: what, item: itemId || '', status: 'sent', sentAt: nowMs(), createdAt: nowMs() }); this.push([me(what), fv(clinicN() + ' 코디네이터에게 보냈어요.\n바뀌기 전까지 지금 시간은 그대로예요.')], { conv: 'menu' }); return; }
     var s = S(), msg = '[예약 문의] ' + (s.me ? s.me + ' · ' : '') + what + '\n가능한 시간을 알려 주세요.';
     var id = 'q' + Date.now().toString(36);
     put('reqs/' + id, { t: what, item: itemId || '', status: 'draft', createdAt: nowMs() });
@@ -468,7 +469,7 @@ class App {
         var extra = { num: num };
         var trig = D.items.find((x) => x.kind === 'trigger' && x.date === t);
         var ringAt = trig && trig.time ? trig.time : (r && showDose && !done && r.time ? r.time : null), rsec = ringAt ? secsTo(t, ringAt) : -1;
-        if (ringAt && rsec > 0) { var rg = ringFor(rsec, 360, 113.1); Object.assign(extra, { hasRing: true, ringOff: rg.off, ringSecs: rg.secs, ringLeft: leftText(rsec), ringLabel: (partner ? meN() + ' ' : '') + ringAt + (trig ? ' 트리거 정각까지' : ' ' + (r.title || '주사') + '까지') }); }
+        if (ringAt && rsec > 0) { var rg = ringFor(rsec, 720, 113.1); Object.assign(extra, { hasRing: true, ringOff: rg.off, ringSecs: rg.secs, ringLeft: leftText(rsec), ringLabel: (partner ? meN() + ' ' : '') + ringAt + (trig ? ' 트리거 정각까지' : ' ' + (r.title || '주사') + '까지') }); }
         if (ringAt && rsec > 0) {} else if (trig) Object.assign(extra, { hasChip: true, chip: (partner ? meN() + ' ' : '') + (trig.time || '') + ' 정각' + (trig.time && trig.time > nowHM() ? '' : ' · 지남'), chipBg: SIGNAL, chipInk: '#FFFFFF', chipEdge: 'none' });
         else if (r && showDose && (done || rsec <= 0)) Object.assign(extra, { hasChip: true, chip: (partner ? meN() + ' ' : '') + (r.time || '') + ' · ' + (r.title || '주사') + (done ? ' · 맞음 ' + hm(done.at) : (r.time ? ' · ' + calmLeft(minsTo(r.time)) : '')), chipBg: done ? INK : '#FFFFFF', chipInk: done ? '#FFFFFF' : INK, chipEdge: done ? 'none' : 'inset 0 0 0 1px #E4E4E7' });
         rows.push(row('msNow', cur === 1 && D.rules.length ? '과배란 주사' : name, dayN > 0 && dayN < 60 ? dayN + '일째' : '지금', '', extra));
@@ -520,7 +521,8 @@ class App {
       return { days: days.map((day, i) => {
         var d = parseYmd(day), isToday = day === t, past = day < t, isOpen = day === sel, src = evs[i];
         var mk = (e) => { var g = isGone(day, e.time), k = g ? 'done' : e.k, st2 = EVS[k] || EVS.dose, rq = reqs.find((r) => r.item === e.id && r.status !== 'done');
-          var badge = rq ? ['병원 답 기다림', 'rgba(31,91,255,0.12)', SIGNAL] : (e.k === 'visit' && !g ? ['확정', '#F4F4F5', INK] : null);
+          var rqDone = reqs.find((r) => r.item === e.id && r.status === 'done');
+          var badge = rq ? ['병원 답 기다림', 'rgba(31,91,255,0.12)', SIGNAL] : (rqDone && !g ? ['변경됨', 'rgba(31,91,255,0.12)', SIGNAL] : (e.k === 'visit' && !g ? ['확정', '#F4F4F5', INK] : null));
           return { time: e.time, t: e.t, bg: st2[0], ink: st2[1], edge: st2[2], cls: st2[3], hasBadge: !!badge, badge: badge ? badge[0] : '', bBg: badge ? badge[1] : '', bInk: badge ? badge[2] : '', g: g, e: e, rq: rq }; };
         var ev = src.map(mk);
         var lines = ev.map((x) => { var e = x.e, dkey = doseKey(day, e.id), dn = e.k === 'dose' && D.doses[dkey];
@@ -616,16 +618,16 @@ class App {
     var act = (label, fn) => ({ t: label, bg: '#FFFFFF', ink: INK, edge: 'inset 0 0 0 1.5px ' + LINE, href: '', tap: fn });
     var before = cur == null || cur < 3;
     var list = [
-      { k: 'fee', who: '국가', t: '난임부부 시술비 지원', sub: before ? '시술 전에 보건소 지원결정통지서가 있어야 해요' : '통지서를 병원에 냈는지 확인해 두세요', s: gov.fee ? '신청함' : (before ? '시술 전 필요' : '확인'), hot: !gov.fee && before,
+      { k: 'fee', who: '국가', icon: 'M4 21V9l8-5 8 5v12M9 21v-6h6v6M12 8v4M10 10h4', t: '난임부부 시술비 지원', sub: before ? '시술 전에 보건소 지원결정통지서가 있어야 해요' : '통지서를 병원에 냈는지 확인해 두세요', s: gov.fee ? '신청함' : (before ? '시술 전 필요' : '확인'), hot: !gov.fee && before,
         steps: ['보건소에 신청해요 (온라인 신청도 돼요)', '지원결정통지서를 받아요', '시술 전에 병원에 통지서를 내요'], docs: ['난임진단서 (병원)', '신분증', '보건소마다 추가 서류가 달라요'],
-        acts: [act('신청 정보 복사', () => { var t2 = '신청인: ' + meN() + '\n사는 곳: ' + (s.region || '') + '\n시술 병원: ' + clinicN() + (s.phone ? ' ' + s.phone : ''); try { navigator.clipboard.writeText(t2).catch(() => {}); } catch (e) {} self.say('복사했어요 · 신청 페이지에 붙여 넣으세요'); }), link('신청 페이지 열기', 'https://www.gov.kr'), mark('fee', '신청했어요')] },
-      { k: 'local', who: '지자체', t: '사는 곳 추가 지원', sub: s.region ? s.region + ' 지원을 찾아볼 수 있어요' : '사는 곳을 넣으면 맞는 지원을 찾아요', s: gov.local ? '확인함' : '찾아보기', hot: false,
+        acts: [link('정부24에서 신청', 'https://www.gov.kr'), mark('fee', '신청했어요')] },
+      { k: 'local', who: '지자체', icon: 'M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11zM12 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z', t: '사는 곳 추가 지원', sub: s.region ? s.region + ' 지원을 찾아볼 수 있어요' : '사는 곳을 넣으면 맞는 지원을 찾아요', s: gov.local ? '확인함' : '찾아보기', hot: false,
         steps: ['보조금24에서 사는 곳으로 검색해요', '난임·임신 지원 항목을 확인해요'], docs: [],
         acts: [link('보조금 찾아보기', 'https://www.gov.kr/portal/rcvfvrSvc/main'), act(s.region ? '사는 곳 바꾸기' : '사는 곳 넣기', () => self.ask('region', '사는 곳(시·군·구)을 알려 주세요. 지원 찾기에만 써요.')), mark('local', '확인했어요')] },
-      { k: 'leave', who: '직장', t: '난임치료휴가', sub: '연 6일 · 그중 2일 유급', s: days.length ? '이번 주 병원 ' + days.length + '일' : '회사 신청', hot: days.length > 0,
+      { k: 'leave', who: '직장', icon: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16', t: '난임치료휴가', sub: '연 6일 · 그중 2일 유급', s: days.length ? '이번 주 병원 ' + days.length + '일' : '회사 신청', hot: days.length > 0,
         steps: ['병원 가는 날을 회사에 미리 신청해요', '병원 이름이나 시술 내용은 쓰지 않아도 돼요'], docs: ['진료 확인서 (회사가 요청할 때)'],
         acts: partner ? [] : [act('휴가 신청 글 만들기', () => self.leaveDraft(days)), mark('leave', '신청했어요')] },
-      { k: 'tax', who: '세금', t: '난임시술비 의료비 공제', sub: '병원 영수증과 진료비 세부내역서를 모아 두세요', s: gov.tax ? '모으는 중' : '모아 두기', hot: false,
+      { k: 'tax', who: '세금', icon: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6', t: '난임시술비 의료비 공제', sub: '병원 영수증과 진료비 세부내역서를 모아 두세요', s: gov.tax ? '모으는 중' : '모아 두기', hot: false,
         steps: ['시술비는 일반 의료비보다 공제율이 높아요', '병원에서 진료비 세부내역서를 받아 두세요'], docs: ['영수증', '진료비 세부내역서'], acts: [mark('tax', '모으고 있어요')] }
     ];
     return list.map((g, i) => Object.assign(g, { divider: i ? '1px solid ' + LINE : '0', o: 1,
@@ -738,7 +740,7 @@ class App {
       curH: curH, appR: 0, curtainOn: u.curtain,
       openCurtain: () => self.open(), closeCurtain: () => self.closeCurtain(),
       fevioLabel: tab === 'plan' ? '예약하기' : 'Fevio', fevioAria: tab === 'plan' ? '예약하기 · Fevio 열기' : 'Fevio 열기',
-      coName: clinicN() + ' 담당 코디네이터', coSub: s.phone ? '병원 ' + s.phone : '병원 전화번호를 알려 주시면 여기서 바로 봐요', coBg: tint(accent, 0.07),
+      coName: s.clinic ? s.clinic + ' 코디네이터' : '병원 코디네이터', coSub: s.clinic ? (s.phone ? '병원 ' + s.phone : '연결됨') : '나에서 병원을 등록하면 연결돼요', coBg: tint(accent, 0.07),
       callClinic: () => { if (s.phone) { try { navigator.clipboard.writeText(s.phone).catch(() => {}); } catch (e) {} self.say(clinicN() + ' ' + s.phone + ' · 번호를 복사했어요'); } else self.say('병원 전화번호가 아직 없어요'); },
       threadEmpty: tEmpty, prompts: prompts, thread: thread, chips: chips, startSym: () => self.startSym(),
       attach: u.attach && tEmpty, showSym: !u.attach, attachInThread: u.attach && !tEmpty,

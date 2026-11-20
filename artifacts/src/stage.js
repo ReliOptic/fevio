@@ -1,14 +1,17 @@
 /* ===== Demo stage: moves the live phones between layouts and shows pen-drawn scenes between them ===== */
 var STAGE = { mode: 'duo', illo: null };
 var INKC = '#1B1B1B', ACC = '#1F5BFF', ACCS = '#E8EEFF';
+// The demo plays in a fixed frame: 16:9 on wide screens, 9:16 on phones, with subtitles inside the frame.
 function stageBox() {
   var bar = document.getElementById('demo-bar'), bh = bar ? bar.getBoundingClientRect().height : 0;
-  var vw = document.documentElement.clientWidth, vh = window.innerHeight;
-  var W = Math.min(vw - 24, 1500), H = Math.max(420, vh - bh - 44);
-  return { W: W, H: H, portrait: W < 760 };
+  var vw = document.documentElement.clientWidth, vh = window.innerHeight, W, H, portrait = vw < 760;
+  if (!portrait) { W = Math.min(vw - 32, 1280); H = Math.round(W * 9 / 16); var maxH = vh - bh - 36; if (H > maxH) { H = Math.max(440, maxH); W = Math.round(H * 16 / 9); } }
+  else { W = vw - 20; H = Math.min(vh - bh - 24, Math.round(W * 16 / 9)); }
+  var sub = portrait ? 74 : 64, pad = portrait ? 10 : 22;
+  return { W: W, H: H, portrait: portrait, ix: pad, iy: pad, iw: W - pad * 2, ih: H - pad - sub };
 }
 function placements(mode, b) {
-  var W = b.W, H = b.H, PW = 384, PH = 824, g = 24, P = {}, I = null, k;
+  var W = b.iw, H = b.ih, PW = 384, PH = 824, g = 24, P = {}, I = null, k;
   var put = (key, x, y, s, o) => { P[key] = { x: x, y: y, k: s, o: o == null ? 1 : o }; };
   var hide = (key, x, y, s) => put(key, x, y, s, 0);
   if (!b.portrait) {
@@ -29,16 +32,16 @@ function placements(mode, b) {
 function applyStage() {
   if (!document.body.classList.contains('demo-stage')) return;
   var b = stageBox(), wrap = document.querySelector('.phones'); wrap.style.width = b.W + 'px'; wrap.style.height = b.H + 'px';
-  var L = placements(STAGE.mode, b), slots = { pt: document.querySelector('.slot[data-who="pt"]'), pr: document.querySelector('.slot[data-who="pr"]') };
-  Object.keys(slots).forEach((key) => { var s = slots[key], p = L.P[key]; if (!s || !p) return; s.style.transform = 'translate(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px) scale(' + p.k.toFixed(4) + ')'; s.style.opacity = p.o; s.style.pointerEvents = p.o ? '' : 'none'; });
+  var L = placements(STAGE.mode, b), ox = b.ix, oy = b.iy, slots = { pt: document.querySelector('.slot[data-who="pt"]'), pr: document.querySelector('.slot[data-who="pr"]') };
+  Object.keys(slots).forEach((key) => { var s = slots[key], p = L.P[key]; if (!s || !p) return; s.style.transform = 'translate(' + (p.x + ox).toFixed(1) + 'px,' + (p.y + oy).toFixed(1) + 'px) scale(' + p.k.toFixed(4) + ')'; s.style.opacity = p.o; s.style.pointerEvents = p.o ? '' : 'none'; });
   var il = document.getElementById('illo');
-  if (L.I) { il.style.left = L.I.x + 'px'; il.style.top = L.I.y + 'px'; il.style.width = L.I.w + 'px'; il.style.height = L.I.h + 'px'; il.classList.add('on'); }
+  if (L.I) { il.style.left = (L.I.x + ox) + 'px'; il.style.top = (L.I.y + oy) + 'px'; il.style.width = L.I.w + 'px'; il.style.height = L.I.h + 'px'; il.classList.add('on'); }
   else il.classList.remove('on');
 }
 async function stage(mode, illoKey) {
   STAGE.mode = mode;
   var il = document.getElementById('illo');
-  if (illoKey && illoKey !== STAGE.illo) { STAGE.illo = illoKey; il.innerHTML = ILLOS[illoKey](); }
+  if (illoKey && illoKey !== STAGE.illo) { STAGE.illo = illoKey; il.style.setProperty('--ts', (0.65 / DEMO.speed).toFixed(3)); il.innerHTML = ILLOS[illoKey](); }
   if (!illoKey) STAGE.illo = null;
   applyStage(); await sleep(820);
 }
@@ -52,7 +55,7 @@ function stageOff() {
 window.addEventListener('resize', () => applyStage());
 
 /* ----- pen-drawn pieces (viewBox 800×560). Lines draw in, bubbles pop, arrows sweep. ----- */
-function L(d, t, o) { o = o || {}; if (o.dash) return '<path class="fd" style="--d:' + t + 's" d="' + d + '" fill="none" stroke="' + (o.stroke || INKC) + '" stroke-width="' + (o.w || 2.6) + '" stroke-linecap="round" stroke-dasharray="6 8"/>'; return '<path pathLength="1" class="dr" style="--d:' + t + 's" d="' + d + '" fill="' + (o.fill || 'none') + '" stroke="' + (o.stroke || INKC) + '" stroke-width="' + (o.w || 2.6) + '" stroke-linecap="round" stroke-linejoin="round"' + (o.dash ? ' stroke-dasharray="' + o.dash + '"' : '') + '/>'; }
+function L(d, t, o) { o = o || {}; if (o.dash) return '<path class="fd" style="--d:' + t + 's" d="' + d + '" fill="none" stroke="' + (o.stroke || INKC) + '" stroke-width="' + (o.w || 2.6) + '" stroke-linecap="round" stroke-dasharray="6 8"/>'; return '<path pathLength="1" class="dr" style="--d:' + t + 's" d="' + d + '" fill="' + (o.fill || 'none') + '" stroke="' + (o.stroke || INKC) + '" stroke-width="' + (o.w || 3.2) + '" stroke-linecap="round" stroke-linejoin="round"' + (o.dash ? ' stroke-dasharray="' + o.dash + '"' : '') + '/>'; }
 function F(inner, t) { return '<g class="fd" style="--d:' + t + 's">' + inner + '</g>'; }
 function POP(inner, t, cx, cy) { return '<g class="pp" style="--d:' + t + 's;transform-origin:' + cx + 'px ' + cy + 'px">' + inner + '</g>'; }
 function T(x, y, s, size, o) { o = o || {}; return '<text x="' + x + '" y="' + y + '" font-family="Gaegu, \'Nanum Pen Script\', cursive" font-size="' + (size || 24) + '" font-weight="' + (o.bold ? 700 : 400) + '" fill="' + (o.fill || INKC) + '" text-anchor="' + (o.anchor || 'start') + '">' + escH(s) + '</text>'; }
@@ -78,16 +81,17 @@ function person(x, y, t, o) {
   if (o.cap) s += L('M' + (x - 16) + ' ' + (hy - 16) + ' h32 l-4 -12 h-24 Z M' + x + ' ' + (hy - 25) + ' v8 M' + (x - 4) + ' ' + (hy - 21) + ' h8', t + 0.2, { fill: '#FFFFFF', w: 2.2 });
   return s;
 }
+function textW(str, fz) { var n = 0; for (var ch of str) n += /[가-힣]/.test(ch) ? 0.92 : (ch === ' ' ? 0.3 : 0.56); return n * fz; }
 function bubble(x, y, w, h, text, t, o) {
-  o = o || {}; var tail = o.tail === 'r' ? 'M' + (x + w - 30) + ' ' + (y + h) + ' l14 16 l2 -16' : 'M' + (x + 26) + ' ' + (y + h) + ' l-6 16 l18 -16';
+  o = o || {}; var fs = o.size || 32; w = Math.max(w, Math.round(textW(text, fs)) + 44); h = Math.max(h, fs + 34); x = Math.max(10, Math.min(x, 790 - w)); var tail = o.tail === 'r' ? 'M' + (x + w - 30) + ' ' + (y + h) + ' l14 16 l2 -16' : 'M' + (x + 26) + ' ' + (y + h) + ' l-6 16 l18 -16';
   var fill = o.acc ? ACC : '#FFFFFF', ink = o.acc ? '#FFFFFF' : INKC;
-  return POP('<path d="M' + (x + 14) + ' ' + y + ' h' + (w - 28) + ' q14 0 14 14 v' + (h - 28) + ' q0 14 -14 14 h' + (-(w - 28)) + ' q-14 0 -14 -14 v' + (-(h - 28)) + ' q0 -14 14 -14 Z ' + tail + '" fill="' + fill + '" stroke="' + INKC + '" stroke-width="2.4" stroke-linejoin="round"/>' + T(x + w / 2, y + h / 2 + 8, text, o.size || 24, { anchor: 'middle', fill: ink, bold: true }), t, x + w / 2, y + h);
+  return POP('<path d="M' + (x + 14) + ' ' + y + ' h' + (w - 28) + ' q14 0 14 14 v' + (h - 28) + ' q0 14 -14 14 h' + (-(w - 28)) + ' q-14 0 -14 -14 v' + (-(h - 28)) + ' q0 -14 14 -14 Z ' + tail + '" fill="' + fill + '" stroke="' + INKC + '" stroke-width="2.4" stroke-linejoin="round"/>' + T(x + w / 2, y + h / 2 + fs * 0.34, text, fs, { anchor: 'middle', fill: ink, bold: true }), t, x + w / 2, y + h);
 }
 function arrow(d, t, o) { o = o || {}; return L(d, t, { stroke: o.acc ? ACC : INKC, w: o.w || 3, dash: o.dashed ? 1 : 0 }) + F('<path d="' + o.head + '" fill="none" stroke="' + (o.acc ? ACC : INKC) + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>', t + 0.7); }
 function phoneDoodle(x, y, w, h, t, inner) { return L('M' + (x + 12) + ' ' + y + ' h' + (w - 24) + ' q12 0 12 12 v' + (h - 24) + ' q0 12 -12 12 h' + (-(w - 24)) + ' q-12 0 -12 -12 v' + (-(h - 24)) + ' q0 -12 12 -12 Z M' + (x + w / 2 - 12) + ' ' + (y + 8) + ' h24', t, { fill: '#FFFFFF' }) + (inner || ''); }
-function cardDoodle(x, y, w, h, t, lines, o) { o = o || {}; var s = L('M' + (x + 10) + ' ' + y + ' h' + (w - 20) + ' q10 0 10 10 v' + (h - 20) + ' q0 10 -10 10 h' + (-(w - 20)) + ' q-10 0 -10 -10 v' + (-(h - 20)) + ' q0 -10 10 -10 Z', t, { fill: o.fill || '#FFFFFF', stroke: o.stroke || INKC }); (lines || []).forEach((ln, i) => { s += F(T(x + 14, y + 30 + i * 26, ln, o.size || 20, { fill: o.ink || INKC, bold: i === 0 }), t + 0.3 + i * 0.12); }); return s; }
-function clock(x, y, r, label, t) { return L('M' + (x + r) + ' ' + y + ' A' + r + ' ' + r + ' 0 1 1 ' + (x + r - 0.1) + ' ' + (y - 0.5), t, { fill: '#FFFFFF' }) + L('M' + x + ' ' + y + ' L' + x + ' ' + (y - r * 0.6) + ' M' + x + ' ' + y + ' L' + (x + r * 0.45) + ' ' + (y + r * 0.2), t + 0.3, { w: 3.2 }) + (label ? F(T(x, y + r + 28, label, 22, { anchor: 'middle', bold: true }), t + 0.4) : ''); }
-function ring(x, y, r, frac, label, t) { var c = 2 * Math.PI * r; return F('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="#E4E4E7" stroke-width="8"/><circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="' + ACC + '" stroke-width="8" stroke-linecap="round" transform="rotate(-90 ' + x + ' ' + y + ')" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + (c * (1 - frac)).toFixed(1) + '" class="ringsweep" style="--c:' + c.toFixed(1) + '"/>' + T(x, y + 8, label, 22, { anchor: 'middle', bold: true }), t); }
+function cardDoodle(x, y, w, h, t, lines, o) { o = o || {}; var fz0 = Math.max(o.size || 22, 22); (lines || []).forEach((ln) => { w = Math.max(w, Math.round(textW(ln, fz0)) + 30); }); h = Math.max(h, (lines || []).length * (fz0 + 8) + 22); if (!o.fixed) x = Math.max(10, Math.min(x, 790 - w)); var s = L('M' + (x + 10) + ' ' + y + ' h' + (w - 20) + ' q10 0 10 10 v' + (h - 20) + ' q0 10 -10 10 h' + (-(w - 20)) + ' q-10 0 -10 -10 v' + (-(h - 20)) + ' q0 -10 10 -10 Z', t, { fill: o.fill || '#FFFFFF', stroke: o.stroke || INKC }); var fz = Math.max(o.size || 22, 22); (lines || []).forEach((ln, i) => { s += F(T(x + 14, y + 34 + i * (fz + 8), ln, fz, { fill: o.ink || INKC, bold: i === 0 }), t + 0.3 + i * 0.12); }); return s; }
+function clock(x, y, r, label, t) { return L('M' + (x + r) + ' ' + y + ' A' + r + ' ' + r + ' 0 1 1 ' + (x + r - 0.1) + ' ' + (y - 0.5), t, { fill: '#FFFFFF' }) + L('M' + x + ' ' + y + ' L' + x + ' ' + (y - r * 0.6) + ' M' + x + ' ' + y + ' L' + (x + r * 0.45) + ' ' + (y + r * 0.2), t + 0.3, { w: 3.2 }) + (label ? F(T(x, y + r + 34, label, 30, { anchor: 'middle', bold: true }), t + 0.4) : ''); }
+function ring(x, y, r, frac, label, t) { var c = 2 * Math.PI * r; return F('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="#E4E4E7" stroke-width="8"/><circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="' + ACC + '" stroke-width="8" stroke-linecap="round" transform="rotate(-90 ' + x + ' ' + y + ')" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + (c * (1 - frac)).toFixed(1) + '" class="ringsweep" style="--c:' + c.toFixed(1) + '"/>' + T(x, y + 10, label, 28, { anchor: 'middle', bold: true }), t); }
 function desk(x, y, t) { return L('M' + (x - 90) + ' ' + y + ' h180 M' + (x - 80) + ' ' + y + ' v70 M' + (x + 80) + ' ' + y + ' v70', t); }
 function laptop(x, y, t) { return L('M' + (x - 34) + ' ' + y + ' l8 -46 h52 l8 46 Z M' + (x - 44) + ' ' + y + ' h88', t, { fill: '#FFFFFF' }); }
 function monitor(x, y, t, inner) { return L('M' + (x - 50) + ' ' + (y - 80) + ' h100 v66 h-100 Z M' + x + ' ' + (y - 14) + ' v14 M' + (x - 20) + ' ' + y + ' h40', t, { fill: '#FFFFFF' }) + (inner || ''); }
@@ -96,7 +100,7 @@ function moon(x, y, t) { return L('M' + x + ' ' + (y - 24) + ' a24 24 0 1 0 20 3
 function calendar(x, y, t, mark) { var s = L('M' + x + ' ' + y + ' h170 v130 h-170 Z M' + x + ' ' + (y + 30) + ' h170 M' + (x + 30) + ' ' + (y - 10) + ' v20 M' + (x + 140) + ' ' + (y - 10) + ' v20', t, { fill: '#FFFFFF' }); for (var r = 0; r < 3; r++) for (var c = 0; c < 5; c++) s += F('<rect x="' + (x + 14 + c * 31) + '" y="' + (y + 42 + r * 28) + '" width="20" height="16" rx="3" fill="' + (r === 2 && c === 3 ? ACC : '#E4E4E7') + '"/>', t + 0.3 + (r * 5 + c) * 0.02); if (mark) s += L('M' + (x + 116) + ' ' + (y + 108) + ' a22 18 0 1 0 1 -1', t + 0.9, { stroke: ACC, w: 3 }); return s; }
 function svgWrap(inner, caption) {
   return '<svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="' + escH(caption || '') + '"><defs><filter id="wob"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter></defs>'
-    + '<g filter="url(#wob)">' + inner + '</g>' + (caption ? F('<rect x="250" y="508" width="300" height="34" rx="6" fill="' + INKC + '"/>' + T(400, 532, caption, 20, { anchor: 'middle', fill: '#FFFFFF', bold: true }), 0.2) : '') + '</svg>';
+    + '<g filter="url(#wob)">' + inner + '</g></svg>';
 }
 var ILLOS = {
   scatter: () => svgWrap(
@@ -117,18 +121,12 @@ var ILLOS = {
     desk(200, 380, 0.1) + person(200, 380, 0.2, { hair: 'long', pose: 'sit' }) + phoneDoodle(250, 250, 50, 86, 0.6, F(T(275, 300, '반차', 16, { anchor: 'middle', bold: true }), 0.9))
     + desk(600, 380, 0.3) + laptop(600, 380, 0.5) + person(600, 380, 0.4, { hair: 'short', pose: 'sit' })
     + arrow('M320 260 C 420 200, 500 210, 560 240', 1.2, { acc: true, dashed: true, head: 'M548 226 l14 14 l-18 4' })
-    + cardDoodle(520, 120, 220, 76, 1.8, ['서연 · 메모', '오후 반차 냈어'], { size: 19 }) + POP(T(700, 230, '봤어요 ✓', 22, { bold: true, fill: ACC }), 2.4, 700, 230), '메모를 켜 두면 민준 폰에 바로 떠요'),
+    + cardDoodle(520, 120, 220, 76, 1.8, ['서연 · 메모', '오전 반차, 피검사 다녀옴'], { size: 19 }) + POP(T(700, 230, '봤어요 ✓', 22, { bold: true, fill: ACC }), 2.4, 700, 230), '메모를 켜 두면 민준 폰에 바로 떠요'),
   plan: () => svgWrap(
     desk(220, 400, 0.1) + monitor(220, 400, 0.3) + person(320, 400, 0.2, { hair: 'short', cap: true, pose: 'sit' })
     + arrow('M300 250 C 380 180, 470 180, 540 230', 1.0, { acc: true, head: 'M528 216 l14 14 l-18 4' })
-    + phoneDoodle(540, 210, 130, 230, 1.2, cardDoodle(552, 240, 106, 110, 1.6, ['오늘 계획', '월 09:20', '주사 그대로'], { size: 16 }) + POP('<rect x="560" y="370" width="90" height="34" rx="17" fill="' + INKC + '"/>' + T(605, 393, '확인했어요', 17, { anchor: 'middle', fill: '#FFFFFF', bold: true }), 2.2, 605, 387))
+    + phoneDoodle(520, 150, 210, 300, 1.2, cardDoodle(532, 186, 186, 110, 1.6, ['오늘 계획', '내일 09:20', '주사 그대로'], { size: 16 }) + POP('<rect x="560" y="380" width="130" height="44" rx="22" fill="' + INKC + '"/>' + T(625, 410, '확인했어요', 22, { anchor: 'middle', fill: '#FFFFFF', bold: true }), 2.2, 625, 402))
     + bubble(80, 120, 250, 56, '오늘 계획 보냈어요', 1.4), '병원이 정하면 카드로 오고, 확인만 누르면 돼요'),
-  gov: () => svgWrap(
-    person(170, 470, 0.1, { hair: 'long', pose: 'phone' })
-    + L('M330 150 h330 v250 h-330 Z M330 186 h330', 0.5, { fill: '#FFFFFF' }) + F('<circle cx="350" cy="168" r="5" fill="#E4E4E7"/><circle cx="368" cy="168" r="5" fill="#E4E4E7"/><circle cx="386" cy="168" r="5" fill="#E4E4E7"/>' + T(495, 175, '신청 페이지', 18, { anchor: 'middle' }), 0.9)
-    + cardDoodle(360, 210, 270, 46, 1.2, ['신청인 · 붙여 넣음'], { size: 18 }) + cardDoodle(360, 266, 270, 46, 1.4, ['시술 병원 · 붙여 넣음'], { size: 18 }) + F('<rect x="360" y="330" width="270" height="44" rx="10" fill="' + INKC + '"/>' + T(495, 359, '다음', 20, { anchor: 'middle', fill: '#FFFFFF', bold: true }), 1.7)
-    + arrow('M220 300 C 260 240, 290 220, 320 230', 1.0, { acc: true, head: 'M306 218 l16 12 l-18 6' }) + arrow('M330 430 C 280 470, 250 470, 226 440', 2.0, { head: 'M222 456 l2 -18 l16 8' })
-    + POP(T(330, 470, '◀ Fevio', 22, { bold: true, fill: ACC }), 2.4, 330, 470), '신청은 정부24에서, 정보는 Fevio가 챙겨요'),
   night: () => svgWrap(
     moon(640, 110, 0.1) + clock(140, 140, 44, '22:00', 0.3)
     + person(330, 470, 0.4, { hair: 'long', pose: 'pen' }) + person(500, 470, 0.6, { hair: 'short', pose: 'phone' })
@@ -140,8 +138,8 @@ var ILLOS = {
     + POP(T(560, 250, '찰칵', 26, { bold: true, fill: ACC }), 1.5, 560, 250) + cardDoodle(260, 120, 230, 76, 1.6, ['채취 후 안내', '내일 09:40 연구실 전화'], { size: 18 }), '회복실 안내문도 그 자리에서 찍어요'),
   symptom: () => svgWrap(
     moon(660, 100, 0.1) + person(260, 470, 0.2, { hair: 'long', pose: 'belly' }) + F(T(300, 260, '!', 40, { bold: true }), 0.9)
-    + phoneDoodle(430, 170, 150, 270, 0.8, cardDoodle(444, 210, 122, 120, 1.2, ['병원에 바로', '02-1234-5678', '응급하면 119'], { size: 16, stroke: '#D92D20' }))
-    + arrow('M600 300 C 650 300, 680 330, 690 370', 1.6, { head: 'M676 360 l14 12 l6 -16' }) + POP(T(700, 410, '☎', 40, { anchor: 'middle' }), 2.2, 700, 400), '판단 대신, 연락할 곳을 바로 보여 줘요'),
+    + phoneDoodle(420, 150, 200, 300, 0.8, cardDoodle(432, 190, 176, 120, 1.2, ['병원에 바로', '02-1234-5678', '응급하면 119'], { size: 16, stroke: '#D92D20' }))
+    + arrow('M630 300 C 680 300, 700 330, 710 370', 1.6, { head: 'M696 360 l14 12 l6 -16' }) + POP(T(720, 420, '☎', 44, { anchor: 'middle' }), 2.2, 720, 410), '판단 대신, 연락할 곳을 바로 보여 줘요'),
   together: () => svgWrap(
     sofa(150, 470, 500, 0.1) + person(320, 472, 0.3, { hair: 'long', pose: 'phone' }) + person(470, 472, 0.4, { hair: 'short', pose: 'phone' })
     + calendar(310, 90, 0.8, true) + POP(T(560, 120, '판정 날', 26, { bold: true, fill: ACC }), 1.8, 560, 112)
