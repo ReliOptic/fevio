@@ -1,0 +1,628 @@
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 800; color: #575A62">서연 · 환자 <span style="font-weight: 600; color: #8A8D94">· 오늘 타임라인은 위로 올리면 지난 기록</span></span>
+<div style="position: relative; height: 800px; border-radius: 44px; background: #0E0F11; overflow: hidden; box-shadow: inset 0 0 0 1px #E4E4E7">
+
+<div id="f3-cur" style="position: absolute; left: 0; right: 0; top: 0; height: {{curH}}px; z-index: 1; background: #FFFFFF; display: flex; flex-direction: column; padding-top: 46px; box-sizing: border-box; overflow: hidden; transition: height 520ms cubic-bezier(0.32,0.72,0,1)">
+<div style="height: 34px; flex: none; display: flex; align-items: center; padding: 0 18px; gap: 8px; font-size: 16px; font-weight: 800">
+<span style="width: 22px; height: 22px; border-radius: 11px; background: #0E0F11; display: grid; place-items: center"><span style="width: 8px; height: 8px; border-radius: 4px; background: #1F5BFF"></span></span>Fevio
+<span class="num" style="margin-left: auto; font-size: 12px; font-weight: 700; color: #8A8D94">{{dateLabel}}</span>
+</div>
+<div style="flex: none; margin: 6px 14px 0 14px; padding: 10px 10px 10px 12px; border-radius: 18px; background: {{coBg}}; display: flex; align-items: center; gap: 10px">
+<span style="position: relative; width: 40px; height: 40px; border-radius: 20px; flex: none; background: {{accent}}; color: #FFFFFF; display: grid; place-items: center; font-size: 15px; font-weight: 800"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13v-1a8 8 0 0116 0v1M4 13h3v5H5a1 1 0 01-1-1zM20 13h-3v5h2a1 1 0 001-1zM17 18c0 1.5-2 2.5-5 2.5"></path></svg>
+<span style="position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 6px; background: #12B76A; box-shadow: 0 0 0 2px #FFFFFF"></span></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<span style="font-size: 14px; font-weight: 800">{{coName}}</span>
+<span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">{{coSub}}</span>
+</span>
+<button class="tap" aria-label="병원에 전화" onClick="{{callClinic}}" style="width: 40px; height: 40px; border-radius: 20px; display: grid; place-items: center; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px {{accent}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"></path></svg>
+</button>
+</div>
+
+<div id="f3-thread" class="scroll" style="flex: 1; min-height: 0; overflow-y: auto; padding: 10px 14px 6px 14px; display: flex; flex-direction: column; gap: 8px">
+<sc-if value="{{threadEmpty}}" hint-placeholder-val="{{ true }}">
+<div id="f3-cur-empty" class="in" style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<sc-for list="{{prompts}}" as="p" hint-placeholder-count="4">
+<button class="tap" onClick="{{p.act}}" style="min-height: 64px; padding: 10px 12px; border-radius: 16px; text-align: left; display: flex; flex-direction: column; gap: 6px; background: #F4F4F5">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{p.icon}}"></path></svg>
+<span style="font-size: 13px; line-height: 18px; font-weight: 700">{{p.t}}</span>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{attach}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{attachOpts}}" as="o" hint-placeholder-count="3">
+<button class="tap" onClick="{{o.act}}" style="height: 64px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: #F4F4F5; font-size: 12px; font-weight: 700">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{o.icon}}"></path></svg>{{o.t}}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{showSym}}" hint-placeholder-val="{{ true }}">
+<button class="tap" onClick="{{startSym}}" style="padding: 12px 14px; border-radius: 16px; text-align: left; display: flex; align-items: center; gap: 12px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #D92D20">
+<span style="width: 34px; height: 34px; border-radius: 17px; flex: none; display: grid; place-items: center; background: rgba(217,45,32,0.10)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D92D20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; font-weight: 800">몸이 불편해요</span>
+<span style="font-size: 12px; font-weight: 600; color: #575A62">통증 · 출혈 · 숨참 · 열 · 병원으로 바로 이어 드려요</span>
+</span>
+</button>
+</sc-if>
+</div>
+</sc-if>
+<sc-for list="{{thread}}" as="m" hint-placeholder-count="2">
+<div class="in" style="display: flex; flex-direction: column; align-items: {{m.align}}; gap: 3px">
+<sc-if value="{{m.hasWho}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 11px; font-weight: 800; color: {{accent}}; padding-left: 4px">{{m.who}}</span>
+</sc-if>
+<sc-if value="{{m.hasImg}}" hint-placeholder-val="{{ false }}">
+<span style="width: 150px">
+<sc-for list="{{m.imgs}}" as="i" hint-placeholder-count="1">
+<span style="position: relative; display: block; height: {{i.h}}px; border-radius: 12px; overflow: hidden; background: {{i.bg}}">
+<svg width="{{i.ic}}" height="{{i.ic}}" viewBox="0 0 24 24" fill="none" stroke="rgba(14,15,17,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)"><path d="{{i.icon}}"></path></svg>
+<sc-if value="{{i.pii}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 10%; right: 30%; top: 38%; height: 9px; border-radius: 3px; background: rgba(14,15,17,0.55)"></span><span style="position: absolute; left: 6px; top: 6px; height: 18px; padding: 0 6px; border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: rgba(14,15,17,0.72); color: #FFFFFF">이름 가림</span></sc-if>
+<sc-if value="{{i.cap}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 800; color: rgba(14,15,17,0.7)">{{i.label}}</span></sc-if>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{m.hasText}}" hint-placeholder-val="{{ true }}">
+<span style="max-width: 86%; padding: 9px 13px; border-radius: {{m.radius}}; font-size: 14px; line-height: 20px; background: {{m.bg}}; color: {{m.ink}}; white-space: pre-line">{{m.text}}</span>
+</sc-if>
+<sc-if value="{{m.hasCard}}" hint-placeholder-val="{{ false }}">
+<div style="width: 90%; border-radius: 16px; padding: 11px 13px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px {{m.edge}}; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 800; color: {{m.edge}}">{{m.kicker}}</span>
+<span style="font-size: 14px; line-height: 20px; white-space: pre-line">{{m.body}}</span>
+<sc-if value="{{m.hasActs}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{m.acts}}" as="a" hint-placeholder-count="2">
+<button class="tap" onClick="{{a.tap}}" style="height: 36px; padding: 0 14px; border-radius: 18px; font-size: 13px; font-weight: 800; background: {{a.bg}}; color: {{a.ink}}; box-shadow: {{a.edge}}">{{a.t}}</button>
+</sc-for>
+</span>
+</sc-if>
+<span style="font-size: 11px; font-weight: 600; color: #575A62">{{m.foot}}</span>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{attachInThread}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{attachOpts}}" as="o" hint-placeholder-count="3">
+<button class="tap" onClick="{{o.act}}" style="height: 64px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: #F4F4F5; font-size: 12px; font-weight: 700">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{o.icon}}"></path></svg>{{o.t}}</button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+
+<div style="flex: none; padding: 4px 14px 0 14px; display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+<button class="tap in" onClick="{{c.act}}" style="height: 36px; padding: 0 13px; border-radius: 18px; font-size: 13px; font-weight: 700; background: {{c.bg}}; color: {{c.ink}}; box-shadow: {{c.edge}}">{{c.label}}</button>
+</sc-for>
+</div>
+<form onSubmit="{{submit}}" style="flex: none; margin: 8px 14px 2px 14px; display: flex; align-items: center; gap: 6px">
+<button class="tap" type="button" aria-label="사진·파일 넣기" onClick="{{toggleAttach}}" style="width: 44px; height: 44px; border-radius: 22px; flex: none; display: grid; place-items: center; background: #F4F4F5">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="transform: rotate({{plusRot}}deg); transition: transform 240ms ease"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+<span style="flex: 1; min-width: 0; height: 44px; border-radius: 22px; background: #F4F4F5; display: flex; align-items: center; padding: 0 6px 0 16px">
+<sc-if value="{{listening}}" hint-placeholder-val="{{ false }}">
+<span style="flex: 1; display: flex; align-items: center; gap: 3px; height: 24px">
+<sc-for list="{{wave}}" as="b" hint-placeholder-count="12">
+<span class="wave" style="width: 3px; height: {{b.h}}px; border-radius: 2px; background: #1F5BFF; animation-delay: {{b.dl}}ms"></span>
+</sc-for>
+<span style="margin-left: 8px; font-size: 13px; font-weight: 700; color: #1F5BFF">듣고 있어요</span>
+</span>
+</sc-if>
+<sc-if value="{{notListening}}" hint-placeholder-val="{{ true }}">
+<label for="f3ask" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Fevio에게 말하기</label>
+<input id="f3ask" value="{{draftText}}" onChange="{{type}}" placeholder="편하게 말하거나 적어 주세요" autocomplete="off" style="flex: 1; min-width: 0; height: 38px; border: 0; background: transparent; font: inherit; font-size: 15px; color: #0E0F11">
+</sc-if>
+<sc-if value="{{hasText}}" hint-placeholder-val="{{ false }}">
+<button class="tap" type="submit" aria-label="보내기" style="width: 34px; height: 34px; border-radius: 17px; flex: none; display: grid; place-items: center; background: #0E0F11">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg>
+</button>
+</sc-if>
+</span>
+<button class="tap" type="button" aria-label="{{micLabel}}" onClick="{{toggleMic}}" style="width: 44px; height: 44px; border-radius: 22px; flex: none; display: grid; place-items: center; background: {{micBg}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 013 3v5a3 3 0 01-6 0V7a3 3 0 013-3zM6 11a6 6 0 0012 0M12 17v3"></path></svg>
+</button>
+</form>
+<button aria-label="Fevio 닫기" onClick="{{closeCurtain}}" style="flex: none; height: 22px; display: grid; place-items: center"><span style="width: 40px; height: 5px; border-radius: 3px; background: #D4D4D8"></span></button>
+</div>
+
+<div style="position: absolute; inset: 0; z-index: 2; background: #F4F4F5; border-radius: {{appR}}px; overflow: hidden; transform: translateY({{curH}}px); transition: transform 520ms cubic-bezier(0.32,0.72,0,1), border-radius 320ms ease; box-shadow: 0 -12px 32px rgba(14,15,17,0.22)">
+
+<div style="position: absolute; left: 0; right: 0; top: 0; padding: 48px 12px 0 20px; height: 92px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; z-index: 4; background: linear-gradient(#F4F4F5 80%, rgba(244,244,245,0))">
+<span style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 22px; font-weight: 800">{{tabTitle}}</span><span class="num" style="font-size: 13px; font-weight: 600; color: #575A62">{{tabSub}}</span></span>
+<span style="display: flex; align-items: center; gap: 6px">
+<button class="tap" onClick="{{openCurtain}}" aria-label="{{fevioAria}}" style="height: 34px; padding: 0 14px; border-radius: 17px; background: #0E0F11; color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 7px">
+<span style="width: 7px; height: 7px; border-radius: 4px; background: #1F5BFF"></span>{{fevioLabel}}</button>
+<button class="tap" aria-label="나 · 설정" onClick="{{openSettings}}" style="width: 34px; height: 34px; border-radius: 17px; display: grid; place-items: center; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; font-size: 13px; font-weight: 800">서</button>
+</span>
+</div>
+
+<sc-if value="{{hasNews}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="position: absolute; left: 16px; right: 16px; top: 96px; z-index: 3; padding: 10px 12px; border-radius: 16px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px {{accent}}, 0 6px 16px rgba(14,15,17,0.06); display: flex; align-items: center; gap: 10px">
+<span style="width: 26px; height: 26px; border-radius: 7px; background: {{accent}}; color: #FFFFFF; display: grid; place-items: center; font-size: 12px; font-weight: 800; flex: none">병</span>
+<span style="flex: 1; font-size: 14px; line-height: 19px; font-weight: 700">{{news}}</span>
+<span class="num" style="font-size: 11px; font-weight: 700; color: #575A62">{{newsTime}}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{isDose}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="position: absolute; left: 0; right: 0; top: 96px; bottom: 90px; padding: 0 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="height: 34px; padding: 0 12px; border-radius: 17px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #575A62; background: #FFFFFF; align-self: flex-start">
+<span style="width: 8px; height: 8px; border-radius: 4px; background: #1F5BFF"></span>주사로 키우는 중 · 다음 결정 토 오후</div>
+<div style="flex: 1; border-radius: 28px; background: #FFFFFF; box-shadow: inset 0 0 0 2px #1F5BFF; padding: 22px 20px; display: flex; flex-direction: column">
+<span class="num" style="font-size: 64px; line-height: 66px; font-weight: 800; letter-spacing: -0.04em">21:00</span>
+<span class="num" style="font-size: 15px; font-weight: 800; color: #1F5BFF; margin-top: 4px">2분 남음 · 병원이 정한 시각</span>
+<div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{doseItems}}" as="d" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; background: #F4F4F5">
+<span style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: #FFFFFF">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icon}}"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">{{d.name}}</span><span style="font-size: 12px; font-weight: 600; color: #575A62">{{d.form}}</span></span>
+<span class="num" style="font-size: 26px; font-weight: 800; letter-spacing: -0.02em">{{d.dose}}</span>
+</div>
+</sc-for>
+</div>
+<div style="flex: 1"></div>
+<button class="tap" onClick="{{doseDone}}" style="height: 58px; border-radius: 29px; font-size: 18px; font-weight: 800; background: {{doseBg}}; color: {{doseInk}}">{{doseLabel}}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isFlow}}" hint-placeholder-val="{{ true }}">
+<div id="f3-tl" class="scroll" onScroll="{{onTl}}" style="position: absolute; left: 0; right: 0; top: {{tlTop}}px; bottom: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 6px 16px 150px 14px; -webkit-mask-image: linear-gradient(transparent 0, #000 28px, #000 calc(100% - 130px), transparent calc(100% - 84px)); mask-image: linear-gradient(transparent 0, #000 28px, #000 calc(100% - 130px), transparent calc(100% - 84px))">
+<sc-for list="{{flow}}" as="r" hint-placeholder-count="8">
+<div id="{{r.anchor}}" onClick="{{r.tap}}" style="display: flex; gap: 10px; flex: none; cursor: {{r.cursor}}">
+<div style="width: 28px; flex: none; position: relative; display: flex; justify-content: center">
+<span style="position: absolute; top: 0; bottom: 0; left: 13px; width: 2px; background: {{r.line}}"></span>
+<span class="{{r.pulse}}" style="position: relative; margin-top: {{r.mt}}px; width: {{r.ms}}px; height: {{r.ms}}px; border-radius: {{r.mr}}; transform: rotate({{r.rot}}deg); background: {{r.mBg}}; box-shadow: inset 0 0 0 2px {{r.mRing}}; flex: none; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: {{r.numInk}}">{{r.num}}</span>
+</div>
+<div style="flex: 1; min-width: 0; padding: {{r.pad}}; margin: {{r.cardM}}; border-radius: 14px; background: {{r.cardBg}}; box-shadow: {{r.cardEdge}}; display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: baseline; gap: 8px">
+<span style="font-size: {{r.ts}}px; line-height: 1.3; font-weight: {{r.tw}}; color: {{r.ink}}">{{r.t}}</span>
+<span class="num" style="margin-left: auto; font-size: 12px; font-weight: 700; color: {{r.dInk}}; white-space: nowrap">{{r.d}}</span>
+</span>
+<sc-if value="{{r.hasSub}}" hint-placeholder-val="{{ true }}">
+<span style="font-size: 13px; line-height: 18px; font-weight: 600; color: {{r.subInk}}">{{r.sub}}</span>
+</sc-if>
+<sc-if value="{{r.hasRoom}}" hint-placeholder-val="{{ false }}">
+<button class="tap" onClick="{{r.roomTap}}" style="align-self: flex-start; height: 26px; padding: 0 10px 0 8px; border-radius: 13px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #575A62; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">
+<span style="display: flex"><span style="width: 14px; height: 14px; border-radius: 7px; background: #A1A1AA; box-shadow: 0 0 0 1.5px #FFFFFF"></span><span style="width: 14px; height: 14px; border-radius: 7px; background: #D4D4D8; margin-left: -5px; box-shadow: 0 0 0 1.5px #FFFFFF"></span></span>{{r.room}}</button>
+</sc-if>
+<sc-if value="{{r.hasChip}}" hint-placeholder-val="{{ false }}">
+<span class="num" style="align-self: flex-start; height: {{r.chipH}}px; padding: 0 10px; border-radius: 14px; display: flex; align-items: center; gap: 6px; font-size: {{r.chipFs}}px; font-weight: 800; background: {{r.chipBg}}; color: {{r.chipInk}}; box-shadow: {{r.chipEdge}}">{{r.chip}}</span>
+</sc-if>
+<sc-if value="{{r.hasFunnel}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; align-items: flex-end; gap: 6px; height: 54px">
+<sc-for list="{{r.funnel}}" as="f" hint-placeholder-count="3">
+<span style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px">
+<span class="num" style="font-size: 15px; font-weight: 800">{{f.n}}</span>
+<span style="width: 100%; height: {{f.h}}px; border-radius: 4px; background: {{f.bg}}"></span>
+<span style="font-size: 11px; font-weight: 700; color: #575A62">{{f.t}}</span>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{r.hasFork}}" hint-placeholder-val="{{ false }}">
+<span style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
+<sc-for list="{{r.lanes}}" as="l" hint-placeholder-count="2">
+<span style="border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 4px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: #575A62">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{l.icon}}"></path></svg>{{l.k}}</span>
+<span style="font-size: 13px; line-height: 17px; font-weight: 700">{{l.t}}</span>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{r.hasWin}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; flex-direction: column; gap: 4px">
+<span style="position: relative; height: 34px; border-radius: 10px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; overflow: hidden">
+<span class="win {{r.winCls}}" style="position: absolute; top: 4px; bottom: 4px; left: {{r.wl}}%; width: {{r.ww}}%; border-radius: 7px; background-color: {{r.winBg}}"></span>
+<span style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
+<sc-for list="{{r.days}}" as="w" hint-placeholder-count="7">
+<span class="num" style="display: grid; place-items: center; font-size: 11px; font-weight: 800; color: {{w.ink}}">{{w.t}}</span>
+</sc-for>
+</span>
+</span>
+<span style="font-size: 12px; font-weight: 700; color: {{r.winNoteInk}}">{{r.winNote}}</span>
+</span>
+</sc-if>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ false }}">
+<div id="{{planAnchor}}" style="display: flex; gap: 10px; flex: none">
+<div style="width: 28px; flex: none; position: relative"><span style="position: absolute; top: 0; bottom: 0; left: 13px; width: 2px; background: {{planLine}}"></span></div>
+<div class="in" style="flex: 1; min-width: 0; margin: 2px 0 12px 0; border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px {{accent}}; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="width: 22px; height: 22px; border-radius: 6px; background: {{accent}}; color: #FFFFFF; display: grid; place-items: center; font-size: 11px; font-weight: 800; flex: none">병</span>
+<span style="font-size: 14px; font-weight: 800">오늘 진료 뒤 계획</span>
+<sc-if value="{{planClosed}}" hint-placeholder-val="{{ false }}"><span class="num" style="font-size: 13px; font-weight: 700; color: #575A62">· {{planShort}}</span></sc-if>
+<span class="num" style="margin-left: auto; font-size: 11px; font-weight: 700; color: #8A8D94">{{planAt}}</span>
+<sc-if value="{{planClosed}}" hint-placeholder-val="{{ false }}"><span style="width: 20px; height: 20px; border-radius: 10px; background: #0E0F11; display: grid; place-items: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-label="확인함"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if>
+</span>
+<sc-if value="{{planOpen}}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{planCardRows}}" as="p" hint-placeholder-count="3">
+<span class="{{p.cls}}" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background-color: {{p.bg}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="{{p.icon}}"></path></svg>
+<span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+<span style="font-size: 11px; font-weight: 800; color: {{p.ink}}">{{p.k}}</span>
+<span class="num" style="font-size: 14px; line-height: 19px; font-weight: 800">{{p.v}}</span>
+</span>
+</span>
+</sc-for>
+<button class="tap" onClick="{{planAck}}" style="height: 44px; border-radius: 22px; font-size: 15px; font-weight: 800; background: #0E0F11; color: #FFFFFF">확인했어요</button>
+</sc-if>
+</div>
+</div>
+</sc-if>
+<sc-for list="{{flowPast}}" as="r" hint-placeholder-count="8">
+<div id="{{r.anchor}}" onClick="{{r.tap}}" style="display: flex; gap: 10px; flex: none; cursor: {{r.cursor}}">
+<div style="width: 28px; flex: none; position: relative; display: flex; justify-content: center">
+<span style="position: absolute; top: 0; bottom: 0; left: 13px; width: 2px; background: {{r.line}}"></span>
+<span class="{{r.pulse}}" style="position: relative; margin-top: {{r.mt}}px; width: {{r.ms}}px; height: {{r.ms}}px; border-radius: {{r.mr}}; transform: rotate({{r.rot}}deg); background: {{r.mBg}}; box-shadow: inset 0 0 0 2px {{r.mRing}}; flex: none; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: {{r.numInk}}">{{r.num}}</span>
+</div>
+<div style="flex: 1; min-width: 0; padding: {{r.pad}}; margin: {{r.cardM}}; border-radius: 14px; background: {{r.cardBg}}; box-shadow: {{r.cardEdge}}; display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: baseline; gap: 8px">
+<span style="font-size: {{r.ts}}px; line-height: 1.3; font-weight: {{r.tw}}; color: {{r.ink}}">{{r.t}}</span>
+<span class="num" style="margin-left: auto; font-size: 12px; font-weight: 700; color: {{r.dInk}}; white-space: nowrap">{{r.d}}</span>
+</span>
+<sc-if value="{{r.hasSub}}" hint-placeholder-val="{{ true }}">
+<span style="font-size: 13px; line-height: 18px; font-weight: 600; color: {{r.subInk}}">{{r.sub}}</span>
+</sc-if>
+<sc-if value="{{r.hasRoom}}" hint-placeholder-val="{{ false }}">
+<button class="tap" onClick="{{r.roomTap}}" style="align-self: flex-start; height: 26px; padding: 0 10px 0 8px; border-radius: 13px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #575A62; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">
+<span style="display: flex"><span style="width: 14px; height: 14px; border-radius: 7px; background: #A1A1AA; box-shadow: 0 0 0 1.5px #FFFFFF"></span><span style="width: 14px; height: 14px; border-radius: 7px; background: #D4D4D8; margin-left: -5px; box-shadow: 0 0 0 1.5px #FFFFFF"></span></span>{{r.room}}</button>
+</sc-if>
+<sc-if value="{{r.hasChip}}" hint-placeholder-val="{{ false }}">
+<span class="num" style="align-self: flex-start; height: {{r.chipH}}px; padding: 0 10px; border-radius: 14px; display: flex; align-items: center; gap: 6px; font-size: {{r.chipFs}}px; font-weight: 800; background: {{r.chipBg}}; color: {{r.chipInk}}; box-shadow: {{r.chipEdge}}">{{r.chip}}</span>
+</sc-if>
+<sc-if value="{{r.hasFunnel}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; align-items: flex-end; gap: 6px; height: 54px">
+<sc-for list="{{r.funnel}}" as="f" hint-placeholder-count="3">
+<span style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px">
+<span class="num" style="font-size: 15px; font-weight: 800">{{f.n}}</span>
+<span style="width: 100%; height: {{f.h}}px; border-radius: 4px; background: {{f.bg}}"></span>
+<span style="font-size: 11px; font-weight: 700; color: #575A62">{{f.t}}</span>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{r.hasFork}}" hint-placeholder-val="{{ false }}">
+<span style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
+<sc-for list="{{r.lanes}}" as="l" hint-placeholder-count="2">
+<span style="border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 4px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: #575A62">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{l.icon}}"></path></svg>{{l.k}}</span>
+<span style="font-size: 13px; line-height: 17px; font-weight: 700">{{l.t}}</span>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{r.hasWin}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; flex-direction: column; gap: 4px">
+<span style="position: relative; height: 34px; border-radius: 10px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; overflow: hidden">
+<span class="win {{r.winCls}}" style="position: absolute; top: 4px; bottom: 4px; left: {{r.wl}}%; width: {{r.ww}}%; border-radius: 7px; background-color: {{r.winBg}}"></span>
+<span style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
+<sc-for list="{{r.days}}" as="w" hint-placeholder-count="7">
+<span class="num" style="display: grid; place-items: center; font-size: 11px; font-weight: 800; color: {{w.ink}}">{{w.t}}</span>
+</sc-for>
+</span>
+</span>
+<span style="font-size: 12px; font-weight: 700; color: {{r.winNoteInk}}">{{r.winNote}}</span>
+</span>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{isPlan}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="position: absolute; left: 0; right: 0; top: 92px; bottom: 0; display: flex; flex-direction: column">
+<div style="flex: none; height: 48px; padding: 0 12px 0 10px; display: flex; align-items: center; gap: 8px">
+<button class="tap" aria-expanded="{{calOpen}}" aria-label="{{calToggleLabel}}" onClick="{{calToggle}}" style="height: 36px; padding: 0 8px; border-radius: 12px; display: flex; align-items: center; gap: 6px">
+<span class="num" style="font-size: 17px; font-weight: 800; white-space: nowrap">{{calLabel}}</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{calChev}}deg); transition: transform 240ms ease"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+<span style="flex: 1"></span>
+<sc-if value="{{wkAway}}" hint-placeholder-val="{{ false }}">
+<button class="tap" onClick="{{wkThis}}" style="height: 32px; padding: 0 12px; border-radius: 16px; flex: none; font-size: 12px; font-weight: 800; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">이번 주</button>
+</sc-if>
+<sc-if value="{{isWeek}}" hint-placeholder-val="{{ true }}">
+<span style="display: flex; flex: none">
+<button class="tap" aria-label="지난 주" onClick="{{wkPrev}}" style="width: 36px; height: 36px; border-radius: 18px; display: grid; place-items: center">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+<button class="tap" aria-label="다음 주" onClick="{{wkNext}}" style="width: 36px; height: 36px; border-radius: 18px; display: grid; place-items: center">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button>
+</span>
+</sc-if>
+</div>
+<sc-if value="{{hasReqs}}" hint-placeholder-val="{{ false }}">
+<div class="scroll" style="flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 0 14px 8px 14px">
+<sc-for list="{{reqChips}}" as="q" hint-placeholder-count="1">
+<span class="in" style="flex: none; height: 30px; padding: 0 6px 0 10px; border-radius: 15px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">{{q.t}}<span style="height: 20px; padding: 0 7px; border-radius: 10px; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: {{q.bg}}; color: {{q.ink}}">{{q.s}}</span></span>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isWeek}}" hint-placeholder-val="{{ true }}">
+<div id="f3-weeks" class="scroll" onScroll="{{onWeeks}}" style="flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain">
+<sc-for list="{{weeks}}" as="wk" hint-placeholder-count="4">
+<div class="scroll" style="flex: none; width: 100%; height: 100%; box-sizing: border-box; scroll-snap-align: start; overflow-y: auto; padding: 2px 14px 96px 14px; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{wk.days}}" as="d" hint-placeholder-count="7">
+<div onClick="{{d.tap}}" style="position: relative; flex: none; display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: 16px; background: #FFFFFF; box-shadow: {{d.edge}}; opacity: {{d.o}}; cursor: pointer">
+<span style="width: 34px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px">
+<span style="font-size: 11px; font-weight: 700; color: {{d.dowInk}}">{{d.dow}}</span>
+<span class="num" style="width: 30px; height: 30px; border-radius: 15px; display: grid; place-items: center; font-size: 15px; font-weight: 800; background: {{d.nBg}}; color: {{d.nInk}}">{{d.n}}</span>
+</span>
+<sc-if value="{{d.closed}}" hint-placeholder-val="{{ true }}">
+<span style="flex: 1; min-width: 0; min-height: 44px; display: flex; flex-wrap: wrap; align-content: center; align-items: center; gap: 6px">
+<sc-for list="{{d.ev}}" as="e" hint-placeholder-count="2">
+<span class="num {{e.cls}}" style="height: 30px; padding: 0 10px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; white-space: nowrap; background-color: {{e.bg}}; color: {{e.ink}}; box-shadow: {{e.edge}}"><span style="font-weight: 800">{{e.time}}</span>{{e.t}}
+<sc-if value="{{e.hasBadge}}" hint-placeholder-val="{{ false }}"><span style="height: 18px; padding: 0 6px; border-radius: 9px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: {{e.bBg}}; color: {{e.bInk}}">{{e.badge}}</span></sc-if></span>
+</sc-for>
+<sc-if value="{{d.hasMemo}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A8D94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="메모 있음" style="position: absolute; top: 10px; right: 12px"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg></sc-if>
+</span>
+</sc-if>
+<sc-if value="{{d.open}}" hint-placeholder-val="{{ false }}">
+<span class="in" style="flex: 1; min-width: 0; min-height: 44px; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 4px 0 2px 0">
+<sc-for list="{{d.lines}}" as="e" hint-placeholder-count="2">
+<span style="display: flex; align-items: flex-start; gap: 10px">
+<span class="num" style="width: 42px; flex: none; padding-top: 1px; font-size: 14px; font-weight: 800; color: {{e.tInk}}">{{e.time}}</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 6px; min-width: 0">
+<span class="{{e.cls}}" style="width: 8px; height: 8px; border-radius: 2px; flex: none; background-color: {{e.dot}}; box-shadow: {{e.dotEdge}}"></span>
+<span style="font-size: 14px; font-weight: 800; color: {{e.ink}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{e.t}}</span>
+<sc-if value="{{e.hasBadge}}" hint-placeholder-val="{{ false }}"><span style="height: 18px; padding: 0 6px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: {{e.bBg}}; color: {{e.bInk}}">{{e.badge}}</span></sc-if>
+</span>
+<span class="num" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #575A62">{{e.m}}</span>
+</span>
+<sc-if value="{{e.canR}}" hint-placeholder-val="{{ false }}"><button class="tap" onClick="{{e.resched}}" style="height: 30px; padding: 0 10px; border-radius: 15px; flex: none; font-size: 12px; font-weight: 800; box-shadow: inset 0 0 0 1.5px #E4E4E7">시간 조율</button></sc-if>
+</span>
+</sc-for>
+<sc-if value="{{d.canMemo}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{d.memoView}}" hint-placeholder-val="{{ true }}">
+<button class="tap" onClick="{{d.memoEdit}}" style="min-height: 34px; padding: 6px 10px; border-radius: 10px; display: flex; align-items: center; gap: 8px; text-align: left; background: #F4F4F5">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8D94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>
+<span style="flex: 1; min-width: 0; font-size: 13px; line-height: 18px; font-weight: 600; color: {{d.memoInk}}">{{d.memoText}}</span>
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="나만 보기" style="flex: none"><path d="M6 11h12v9H6zM9 11V8a3 3 0 016 0v3"></path></svg>
+</button>
+</sc-if>
+<sc-if value="{{d.memoEditing}}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{d.memoSave}}" style="display: flex; align-items: center; gap: 6px">
+<label for="f3-memo" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">메모</label>
+<input id="f3-memo" value="{{d.memoDraft}}" onChange="{{d.memoType}}" placeholder="몸 상태, 할 일, 물어볼 것" autocomplete="off" style="flex: 1; min-width: 0; height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: #F4F4F5; font: inherit; font-size: 14px; color: #0E0F11">
+<button class="tap" type="submit" style="height: 36px; padding: 0 12px; border-radius: 18px; flex: none; font-size: 13px; font-weight: 800; background: #0E0F11; color: #FFFFFF">저장</button>
+</form>
+</sc-if>
+</sc-if>
+</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isMonth}}" hint-placeholder-val="{{ false }}">
+<div class="scroll in" style="flex: 1; min-height: 0; overflow-y: auto; padding: 2px 14px 96px 14px">
+<div style="border-radius: 20px; background: #FFFFFF; padding: 10px 6px; box-shadow: inset 0 0 0 1px #E4E4E7">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 11px; font-weight: 700; color: #8A8D94; padding-bottom: 6px">
+<span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 2px">
+<sc-for list="{{month}}" as="c" hint-placeholder-count="35">
+<button class="tap" disabled="{{c.off}}" onClick="{{c.tap}}" style="min-height: 58px; padding: 4px 2px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: {{c.o}}">
+<span class="num" style="width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: {{c.nBg}}; color: {{c.nInk}}">{{c.n}}</span>
+<sc-for list="{{c.bars}}" as="b" hint-placeholder-count="2">
+<span class="{{b.cls}}" style="width: 78%; height: 6px; border-radius: 3px; background-color: {{b.bg}}; box-shadow: {{b.edge}}"></span>
+</sc-for>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isTogether}}" hint-placeholder-val="{{ false }}">
+<div class="scroll in" style="position: absolute; left: 0; right: 0; top: 92px; bottom: 0; overflow-y: auto; padding: 4px 14px 100px 14px; display: flex; flex-direction: column; gap: 10px">
+<span role="tablist" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: #E9E9EC">
+<sc-for list="{{togSegs}}" as="g" hint-placeholder-count="2">
+<button class="tap" role="tab" aria-selected="{{g.on}}" onClick="{{g.tap}}" style="height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 800; background: {{g.bg}}; color: {{g.ink}}; box-shadow: {{g.edge}}">{{g.t}}<span class="num" style="font-size: 12px; font-weight: 700; color: #8A8D94">{{g.n}}</span></button>
+</sc-for>
+</span>
+
+<sc-if value="{{togUs}}" hint-placeholder-val="{{ true }}">
+
+<span style="font-size: 16px; font-weight: 800; padding: 8px 4px 0 4px">지원 제도</span>
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; overflow: hidden">
+<sc-for list="{{support}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: {{g.divider}}; opacity: {{g.o}}">
+<span style="width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: #F4F4F5; color: #575A62">{{g.who}}</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 14px; font-weight: 800">{{g.t}}</span>
+<span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">{{g.sub}}</span>
+</span>
+<span style="height: 22px; padding: 0 8px; border-radius: 11px; flex: none; display: flex; align-items: center; font-size: 11px; font-weight: 800; background: {{g.sBg}}; color: {{g.sInk}}">{{g.s}}</span>
+</div>
+</sc-for>
+</div>
+
+<span style="font-size: 16px; font-weight: 800; padding: 8px 4px 0 4px">이번 주 준비</span>
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; overflow: hidden">
+<sc-for list="{{prep}}" as="r" hint-placeholder-count="4">
+<div class="in" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: {{r.divider}}; background: {{r.bg}}">
+<span style="width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; background: #F4F4F5">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.icon}}"></path></svg></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 6px"><span style="font-size: 14px; font-weight: 800">{{r.t}}</span>
+<sc-if value="{{r.isAd}}" hint-placeholder-val="{{ false }}"><span style="height: 16px; padding: 0 4px; border-radius: 4px; display: grid; place-items: center; font-size: 10px; font-weight: 800; color: #8A8D94; box-shadow: inset 0 0 0 1px #E4E4E7">광고</span></sc-if></span>
+<span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">{{r.s}}</span>
+</span>
+<sc-if value="{{r.isAd}}" hint-placeholder-val="{{ false }}">
+<button class="tap" aria-label="이 제휴 숨기기" onClick="{{r.hide}}" style="width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; color: #8A8D94">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</sc-if>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{togRoad}}" hint-placeholder-val="{{ false }}">
+<div class="scroll" style="display: flex; gap: 6px; overflow-x: auto; margin: 0 -14px; padding: 0 14px">
+<sc-for list="{{topics}}" as="o" hint-placeholder-count="5">
+<button class="tap" aria-pressed="{{o.on}}" onClick="{{o.tap}}" style="flex: none; height: 34px; padding: 0 12px; border-radius: 17px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; white-space: nowrap; background: {{o.bg}}; color: {{o.ink}}; box-shadow: {{o.edge}}">{{o.t}}<span class="num" style="font-size: 12px; font-weight: 700; opacity: 0.6">{{o.n}}</span></button>
+</sc-for>
+</div>
+<div style="padding: 8px; border-radius: 22px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; display: flex; flex-direction: column; gap: 8px">
+<sc-if value="{{hasPostImgs}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; gap: 6px; padding: 2px 4px 0 4px">
+<sc-for list="{{postImgs}}" as="i" hint-placeholder-count="2">
+<span style="position: relative; width: 72px; flex: none">
+<span style="position: relative; display: block; height: {{i.h}}px; border-radius: 12px; overflow: hidden; background: {{i.bg}}">
+<svg width="{{i.ic}}" height="{{i.ic}}" viewBox="0 0 24 24" fill="none" stroke="rgba(14,15,17,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)"><path d="{{i.icon}}"></path></svg>
+<sc-if value="{{i.pii}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 10%; right: 30%; top: 38%; height: 9px; border-radius: 3px; background: rgba(14,15,17,0.55)"></span><span style="position: absolute; left: 6px; top: 6px; height: 18px; padding: 0 6px; border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: rgba(14,15,17,0.72); color: #FFFFFF">이름 가림</span></sc-if>
+<sc-if value="{{i.cap}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 800; color: rgba(14,15,17,0.7)">{{i.label}}</span></sc-if>
+</span>
+<button class="tap" aria-label="사진 빼기" onClick="{{i.remove}}" style="position: absolute; right: -4px; top: -4px; width: 22px; height: 22px; border-radius: 11px; display: grid; place-items: center; background: #0E0F11; color: #FFFFFF"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{photoPick}}" hint-placeholder-val="{{ false }}">
+<span class="in" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 0 4px">
+<sc-for list="{{album}}" as="i" hint-placeholder-count="5">
+<button class="tap" aria-pressed="{{i.on}}" onClick="{{i.toggle}}" style="position: relative; display: block; border-radius: 12px; box-shadow: {{i.ring}}">
+<span style="position: relative; display: block; height: {{i.h}}px; border-radius: 12px; overflow: hidden; background: {{i.bg}}">
+<svg width="{{i.ic}}" height="{{i.ic}}" viewBox="0 0 24 24" fill="none" stroke="rgba(14,15,17,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)"><path d="{{i.icon}}"></path></svg>
+<sc-if value="{{i.pii}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 10%; right: 30%; top: 38%; height: 9px; border-radius: 3px; background: rgba(14,15,17,0.55)"></span><span style="position: absolute; left: 6px; top: 6px; height: 18px; padding: 0 6px; border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: rgba(14,15,17,0.72); color: #FFFFFF">이름 가림</span></sc-if>
+<sc-if value="{{i.cap}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 800; color: rgba(14,15,17,0.7)">{{i.label}}</span></sc-if>
+</span>
+</button>
+</sc-for>
+</span>
+</sc-if>
+<form onSubmit="{{postSubmit}}" style="display: flex; align-items: center; gap: 6px">
+<button class="tap" type="button" aria-label="사진 넣기" onClick="{{togglePhotoPick}}" style="width: 34px; height: 34px; border-radius: 17px; flex: none; display: grid; place-items: center; background: {{photoBtnBg}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{photoBtnInk}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01"></path></svg></button>
+<label for="f3post" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">글쓰기</label>
+<input id="f3post" value="{{postText}}" onChange="{{postType}}" placeholder="글쓰기" autocomplete="off" style="flex: 1; min-width: 0; height: 34px; border: 0; background: transparent; font: inherit; font-size: 15px; color: #0E0F11">
+<button class="tap" type="submit" disabled="{{postOff}}" style="height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; font-weight: 800; background: {{postBg}}; color: {{postInk}}">올리기</button>
+</form>
+</div>
+<sc-if value="{{hasNudge}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="padding: 12px 14px; border-radius: 18px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px {{accent}}; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 14px; line-height: 20px; font-weight: 600">{{nudgeText}}</span>
+<span style="display: flex; gap: 6px">
+<button class="tap" onClick="{{nudgeAsk}}" style="height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; font-weight: 800; background: {{accent}}; color: #FFFFFF">코디네이터에게도</button>
+<button class="tap" onClick="{{nudgePost}}" style="height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; font-weight: 800; box-shadow: inset 0 0 0 1.5px #E4E4E7">그냥 올리기</button>
+</span>
+</div>
+</sc-if>
+<sc-for list="{{posts}}" as="q" hint-placeholder-count="4">
+<div class="in" style="padding: 14px; border-radius: 18px; background: #FFFFFF; display: flex; flex-direction: column; gap: 10px; box-shadow: {{q.edge}}">
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="width: 30px; height: 30px; border-radius: {{q.avR}}; flex: none; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: {{q.avBg}}; color: #FFFFFF">{{q.av}}</span>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="display: flex; align-items: center; gap: 5px"><span style="font-size: 13px; font-weight: 800">{{q.nick}}</span>
+<sc-if value="{{q.isAd}}" hint-placeholder-val="{{ false }}"><span style="height: 16px; padding: 0 4px; border-radius: 4px; display: grid; place-items: center; font-size: 10px; font-weight: 800; color: #8A8D94; box-shadow: inset 0 0 0 1px #E4E4E7">광고</span></sc-if></span>
+<span class="num" style="font-size: 11px; font-weight: 600; color: #8A8D94">{{q.meta}}</span>
+</span>
+</span>
+<span style="font-size: 15px; line-height: 22px; font-weight: 500">{{q.t}}</span>
+<sc-if value="{{q.hasImgs}}" hint-placeholder-val="{{ false }}">
+<span style="display: grid; grid-template-columns: {{q.cols}}; gap: 6px">
+<sc-for list="{{q.imgs}}" as="i" hint-placeholder-count="1">
+<span style="position: relative; display: block; height: {{i.h}}px; border-radius: 12px; overflow: hidden; background: {{i.bg}}">
+<svg width="{{i.ic}}" height="{{i.ic}}" viewBox="0 0 24 24" fill="none" stroke="rgba(14,15,17,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)"><path d="{{i.icon}}"></path></svg>
+<sc-if value="{{i.pii}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 10%; right: 30%; top: 38%; height: 9px; border-radius: 3px; background: rgba(14,15,17,0.55)"></span><span style="position: absolute; left: 6px; top: 6px; height: 18px; padding: 0 6px; border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: rgba(14,15,17,0.72); color: #FFFFFF">이름 가림</span></sc-if>
+<sc-if value="{{i.cap}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 800; color: rgba(14,15,17,0.7)">{{i.label}}</span></sc-if>
+</span>
+</sc-for>
+</span>
+</sc-if>
+<sc-if value="{{q.isPost}}" hint-placeholder-val="{{ true }}">
+<span class="num" style="display: flex; gap: 16px; font-size: 12px; font-weight: 700; color: #575A62">
+<span style="display: flex; align-items: center; gap: 5px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"></path></svg>{{q.like}}</span>
+<span style="display: flex; align-items: center; gap: 5px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#575A62" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"></path></svg>{{q.re}}</span>
+</span>
+</sc-if>
+<sc-if value="{{q.isAd}}" hint-placeholder-val="{{ false }}">
+<span style="align-self: flex-start; height: 30px; padding: 0 14px; border-radius: 15px; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: #F4F4F5">{{q.cta}}</span>
+</sc-if>
+</div>
+</sc-for>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{showNowBtn}}" hint-placeholder-val="{{ false }}">
+<div class="in" style="position: absolute; left: 0; right: 0; bottom: 92px; z-index: 5; display: flex; justify-content: center; pointer-events: none">
+<button class="tap" onClick="{{toNow}}" style="pointer-events: auto; height: 38px; padding: 0 16px; border-radius: 19px; background: #0E0F11; color: #FFFFFF; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px; box-shadow: 0 8px 20px rgba(14,15,17,0.2)">
+<span style="width: 8px; height: 8px; border-radius: 4px; background: #1F5BFF"></span>지금으로</button>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: 18px; right: 18px; bottom: 18px; height: 58px; z-index: 6; border-radius: 29px; background: rgba(255,255,255,0.92); box-shadow: inset 0 0 0 1px rgba(14,15,17,0.06), 0 8px 24px rgba(14,15,17,0.10); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 6px">
+<sc-for list="{{tabs}}" as="b" hint-placeholder-count="3">
+<button class="tap" aria-current="{{b.cur}}" onClick="{{b.go}}" style="height: 46px; min-width: {{b.minW}}px; border-radius: 23px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 800; background: {{b.bg}}; color: {{b.ink}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{b.icon}}"></path></svg>{{b.t}}</button>
+</sc-for>
+</div>
+
+<div aria-hidden="{{setHidden}}" style="position: absolute; inset: 0; z-index: 10; background: #F4F4F5; transform: translateX({{setX}}%); transition: transform 420ms cubic-bezier(0.32,0.72,0,1); box-shadow: -12px 0 30px rgba(14,15,17,0.10)">
+<div style="position: absolute; left: 0; right: 0; top: 48px; height: 44px; padding: 0 12px; display: flex; align-items: center; gap: 10px">
+<button class="tap" aria-label="뒤로" onClick="{{closeSettings}}" style="width: 38px; height: 38px; border-radius: 19px; display: grid; place-items: center; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</button>
+<span style="font-size: 22px; font-weight: 800">나</span>
+</div>
+<div class="scroll" style="position: absolute; left: 0; right: 0; top: 100px; bottom: 0; overflow-y: auto; padding: 0 16px 40px 16px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 800; color: #575A62; padding: 6px 4px 0 4px">함께 보는 사람</span>
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; border-radius: 18px; background: #575A62; color: #FFFFFF; display: grid; place-items: center; font-size: 14px; font-weight: 800">민</span>
+<span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 800">민준</span><span style="font-size: 12px; font-weight: 600; color: #575A62">{{shareSub}}</span></span>
+</span>
+<span role="radiogroup" aria-label="민준에게 보이는 범위" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: #F4F4F5">
+<sc-for list="{{shareOpts}}" as="o" hint-placeholder-count="3">
+<button class="tap" role="radio" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="height: 36px; border-radius: 10px; font-size: 13px; font-weight: 800; background: {{o.bg}}; color: {{o.ink}}; box-shadow: {{o.edge}}">{{o.t}}</button>
+</sc-for>
+</span>
+<button class="tap" role="switch" aria-checked="{{labOn}}" onClick="{{toggleLab}}" style="display: flex; align-items: center; gap: 10px; text-align: left; opacity: {{labO}}">
+<span style="flex: 1; font-size: 14px; font-weight: 700">검사·배아 숫자도 보이기</span>
+<span style="width: 42px; height: 26px; border-radius: 13px; position: relative; background: {{labTrack}}; transition: background-color 180ms ease"><span style="position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 11px; background: #FFFFFF; transform: translateX({{labX}}px); transition: transform 200ms cubic-bezier(0.22,1,0.36,1); box-shadow: 0 1px 3px rgba(0,0,0,0.2)"></span></span>
+</button>
+</div>
+<span style="font-size: 12px; font-weight: 800; color: #575A62; padding: 6px 4px 0 4px">광고</span>
+<button class="tap" role="switch" aria-checked="{{adPersStr}}" onClick="{{toggleAdPers}}" style="border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; padding: 14px; display: flex; align-items: center; gap: 10px; text-align: left">
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 700">준비 목록에 제휴 서비스 보기</span><span style="font-size: 12px; font-weight: 600; color: #575A62">내 정보는 광고주에게 가지 않아요</span></span>
+<span style="width: 42px; height: 26px; border-radius: 13px; position: relative; flex: none; background: {{adPersTrack}}"><span style="position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 11px; background: #FFFFFF; transform: translateX({{adPersX}}px); transition: transform 200ms cubic-bezier(0.22,1,0.36,1); box-shadow: 0 1px 3px rgba(0,0,0,0.2)"></span></span>
+</button>
+<span style="font-size: 12px; font-weight: 800; color: #575A62; padding: 6px 4px 0 4px">연결</span>
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; overflow: hidden">
+<sc-for list="{{links}}" as="k" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-top: {{k.divider}}">
+<span style="flex: 1; font-size: 14px; font-weight: 700">{{k.t}}</span>
+<span style="font-size: 12px; font-weight: 700; color: {{k.ink}}">{{k.v}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 100px; z-index: 30; display: flex; justify-content: center; pointer-events: none"><div role="status" class="in" style="height: 40px; padding: 0 16px; border-radius: 20px; display: flex; align-items: center; white-space: nowrap; background: #0E0F11; color: #FFFFFF; font-size: 13px; font-weight: 700">{{toast}}</div></div>
+</sc-if>
+<sc-if value="{{curtainOn}}" hint-placeholder-val="{{ false }}">
+<button aria-label="Fevio 닫기" onClick="{{closeCurtain}}" style="position: absolute; inset: 0; z-index: 20; background: rgba(14,15,17,0.03)"></button>
+</sc-if>
+</div>
+</div>
+</div>

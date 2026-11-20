@@ -1,0 +1,181 @@
+
+
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<div style="height: 40px; border-radius: 12px; border: 1.5px dashed #C7C7CC; box-sizing: border-box; padding: 0 6px 0 12px; display: flex; align-items: center; gap: 6px; background: #FAFAFA">
+<span style="font-size: 11px; font-weight: 800; color: #8A8D94; margin-right: 4px">시연 컨트롤 · 제품 화면 아님</span>
+<sc-for list="{{demo}}" as="d" hint-placeholder-count="4">
+<button class="tap" disabled="{{d.off}}" onClick="{{d.tap}}" style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 700; background: #FFFFFF; color: #0E0F11; opacity: {{d.o}}; box-shadow: inset 0 0 0 1px #E4E4E7">{{d.t}}</button>
+</sc-for>
+</div>
+
+<div style="position: relative; height: 820px; border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px #D4D4D8, 0 18px 40px rgba(14,15,17,0.08); display: grid; grid-template-columns: 172px 1fr; font-size: 13px">
+
+<div style="background: #F7F7F8; border-right: 1px solid #E4E4E7; display: flex; flex-direction: column; padding: 14px 10px; gap: 4px">
+<span style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 12px 6px">
+<span style="width: 26px; height: 26px; border-radius: 7px; background: {{accent}}; color: #FFFFFF; display: grid; place-items: center; font-size: 12px; font-weight: 800">서</span>
+<span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 800">서울OO난임센터</span><span style="font-size: 11px; font-weight: 600; color: #575A62">Fevio 운영</span></span>
+</span>
+<sc-for list="{{oNav}}" as="n" hint-placeholder-count="4">
+<span style="height: 34px; padding: 0 10px; border-radius: 8px; display: flex; align-items: center; font-size: 13px; font-weight: 700; background: {{n.bg}}; color: {{n.ink}}">{{n.t}}</span>
+</sc-for>
+<span style="flex: 1"></span>
+<span style="padding: 8px 6px; border-top: 1px solid #E4E4E7; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; font-weight: 800">간호 · 박</span>
+<span style="font-size: 11px; font-weight: 600; color: #575A62">토 오전 모니터링 담당</span>
+</span>
+</div>
+
+<div style="display: flex; flex-direction: column; min-width: 0; min-height: 0">
+<div style="height: 52px; flex: none; padding: 0 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E4E4E7">
+<span style="font-size: 17px; font-weight: 800">운영 현황</span>
+<span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">토 11.21 · 오전 모니터링 {{cohortN}}명</span>
+<span style="margin-left: auto; height: 28px; padding: 0 10px; border-radius: 14px; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; background: {{syncBg}}; color: {{syncInk}}">
+<span style="width: 7px; height: 7px; border-radius: 4px; background: {{syncDot}}"></span>{{syncText}}</span>
+</div>
+
+<div style="flex: 1; min-height: 0; padding: 12px 16px 14px 16px; display: flex; flex-direction: column; gap: 12px; opacity: {{oDim}}; transition: opacity 300ms ease">
+
+<div style="flex: none; height: 26px; display: flex; align-items: center; gap: 8px; overflow: hidden">
+<span style="font-size: 11px; font-weight: 800; color: #8A8D94; flex: none">최근 변화</span>
+<sc-for list="{{ticker}}" as="f" hint-placeholder-count="3">
+<span class="num in" style="height: 24px; padding: 0 9px; border-radius: 12px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; background: {{f.bg}}; color: {{f.ink}}">
+<span style="font-weight: 800">{{f.t}}</span>{{f.text}}</span>
+</sc-for>
+</div>
+
+<div style="flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{stages}}" as="g" hint-placeholder-count="4">
+<button class="tap" onClick="{{g.tap}}" style="position: relative; text-align: left; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; background: #FFFFFF; box-shadow: {{g.edge}}; transition: box-shadow 400ms ease">
+<span style="display: flex; align-items: baseline; gap: 6px">
+<span style="font-size: 12px; font-weight: 800; color: #575A62">{{g.t}}</span>
+<span style="margin-left: auto; font-size: 11px; font-weight: 800; color: #1F5BFF">{{g.open}}</span>
+</span>
+<span class="num" style="display: flex; align-items: baseline; gap: 6px"><span style="font-size: 30px; line-height: 32px; font-weight: 800; letter-spacing: -0.03em">{{g.n}}</span><span style="font-size: 13px; font-weight: 700; color: #8A8D94">/ {{g.of}}</span></span>
+<span style="display: flex; gap: 3px; flex-wrap: wrap">
+<sc-for list="{{g.dots}}" as="d" hint-placeholder-count="18">
+<span title="{{d.id}}" style="width: 10px; height: 10px; border-radius: 5px; background: {{d.bg}}; box-shadow: {{d.ring}}"></span>
+</sc-for>
+</span>
+<span class="num" style="font-size: 12px; font-weight: 700; color: {{g.mInk}}">{{g.m}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="flex: none; height: 214px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px">
+<div style="border-radius: 12px; box-shadow: inset 0 0 0 1px #E4E4E7; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+<span style="display: flex; align-items: baseline; gap: 8px">
+<span style="font-size: 13px; font-weight: 800">오늘 들어온 연락</span>
+<span class="num" style="font-size: 11px; font-weight: 700; color: #8A8D94">08:00부터 · 시연 수치</span>
+<span class="num" style="margin-left: auto; font-size: 12px; font-weight: 800">{{ctTotal}}건</span>
+</span>
+<sc-for list="{{contacts}}" as="c" hint-placeholder-count="4">
+<span style="display: grid; grid-template-columns: 132px 1fr 92px; gap: 10px; align-items: center">
+<span style="font-size: 12px; font-weight: 700">{{c.t}}</span>
+<span style="display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: #F4F4F5">
+<span style="width: {{c.wF}}%; background: #1F5BFF; transition: width 500ms ease"></span>
+<span style="width: {{c.wN}}%; background: #0E0F11; transition: width 500ms ease"></span>
+</span>
+<span class="num" style="font-size: 12px; font-weight: 700; color: #575A62; text-align: right">{{c.v}}</span>
+</span>
+</sc-for>
+<span style="flex: 1"></span>
+<span class="num" style="display: flex; gap: 14px; align-items: center; font-size: 12px; font-weight: 700; color: #575A62; padding-top: 8px; border-top: 1px solid #F0F0F2">
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #1F5BFF"></span>Fevio가 병원 계획으로 답함 {{ctFevio}}</span>
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #0E0F11"></span>간호사 처리 {{ctNurse}} · 약 {{ctMin}}분</span>
+</span>
+</div>
+
+<div style="border-radius: 12px; box-shadow: inset 0 0 0 1px #E4E4E7; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 0">
+<span style="display: flex; align-items: baseline; gap: 8px">
+<span style="font-size: 13px; font-weight: 800">사람이 볼 것</span>
+<span class="num" style="font-size: 11px; font-weight: 700; color: #8A8D94">예외만 · {{exN}}건</span>
+</span>
+<div class="scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{exceptions}}" as="x" hint-placeholder-count="3">
+<div class="in" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: {{x.bg}}">
+<span style="width: 8px; height: 8px; border-radius: 4px; flex: none; background: {{x.dot}}"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<span class="num" style="font-size: 12px; font-weight: 800">{{x.t}}</span>
+<span class="num" style="font-size: 11px; font-weight: 600; color: #575A62; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{x.s}}</span>
+</span>
+<button class="tap" disabled="{{x.off}}" onClick="{{x.tap}}" style="height: 28px; padding: 0 10px; border-radius: 14px; font-size: 11px; font-weight: 800; background: #0E0F11; color: #FFFFFF; flex: none; opacity: {{x.o}}">{{x.btn}}</button>
+</div>
+</sc-for>
+<sc-if value="{{exEmpty}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 700; color: #8A8D94">지금 사람이 볼 예외가 없어요</span>
+</sc-if>
+</div>
+</div>
+</div>
+
+<div style="flex: 1; min-height: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px #E4E4E7; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: baseline; gap: 8px">
+<span style="font-size: 13px; font-weight: 800">다음 주 준비</span>
+<span style="font-size: 11px; font-weight: 700; color: #8A8D94">오전 결정이 들어올 때마다 바뀌어요</span>
+<span class="num" style="margin-left: auto; font-size: 11px; font-weight: 800">{{wkSum}}</span>
+</span>
+<div style="display: grid; grid-template-columns: 96px repeat(4, minmax(0, 1fr)); gap: 6px">
+<span></span>
+<sc-for list="{{rxDays}}" as="d" hint-placeholder-count="4">
+<span class="num" style="font-size: 11px; font-weight: 800; color: #575A62">{{d}}</span>
+</sc-for>
+<sc-for list="{{rxRows}}" as="w" hint-placeholder-count="3">
+<span style="font-size: 11px; font-weight: 800; color: #575A62; align-self: center">{{w.t}}</span>
+<sc-for list="{{w.cells}}" as="h" hint-placeholder-count="4">
+<span style="position: relative; border-radius: 8px; padding: 7px; display: flex; flex-direction: column; gap: 5px; background: #FFFFFF; box-shadow: {{h.edge}}">
+<sc-if value="{{h.hasDelta}}" hint-placeholder-val="{{ false }}">
+<span class="num in" style="position: absolute; right: 6px; top: 5px; height: 16px; padding: 0 5px; border-radius: 8px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: {{h.dBg}}; color: #FFFFFF">{{h.delta}}</span>
+</sc-if>
+<sc-if value="{{h.isBar}}" hint-placeholder-val="{{ false }}">
+<span style="height: 14px; border-radius: 3px; background: #F4F4F5; overflow: hidden; margin-right: 52px"><span style="display: block; height: 100%; width: {{h.w}}%; background: #0E0F11; transition: width 500ms ease"></span></span>
+</sc-if>
+<sc-if value="{{h.isUnits}}" hint-placeholder-val="{{ true }}">
+<span style="display: flex; gap: 2px; flex-wrap: wrap; min-height: 14px">
+<sc-for list="{{h.units}}" as="u" hint-placeholder-count="4">
+<span class="{{u.cls}}" style="width: 10px; height: 14px; border-radius: 2px; background-color: {{u.bg}}; box-shadow: {{u.ring}}"></span>
+</sc-for>
+</span>
+</sc-if>
+<span class="num" style="font-size: 11px; font-weight: 700; color: #575A62">{{h.label}}</span>
+<span class="num" style="font-size: 11px; font-weight: 800; color: {{h.stInk}}">{{h.st}}</span>
+</span>
+</sc-for>
+</sc-for>
+</div>
+<span style="display: flex; gap: 12px; font-size: 11px; font-weight: 700; color: #575A62">
+<span style="display: flex; align-items: center; gap: 4px"><span style="width: 10px; height: 12px; border-radius: 2px; background: #0E0F11"></span>확정</span>
+<span style="display: flex; align-items: center; gap: 4px"><span class="hatch" style="width: 10px; height: 12px; border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(31,91,255,0.5)"></span>조건부 (검사 결과에 따라)</span>
+<span style="display: flex; align-items: center; gap: 4px"><span style="width: 10px; height: 12px; border-radius: 2px; box-shadow: inset 0 0 0 2px #D92D20"></span>넘침</span>
+<span style="margin-left: auto">조건부 환자는 가능한 날마다 보이지만 주간 합계에는 1명</span>
+</span>
+</div>
+</div>
+</div>
+
+<div aria-hidden="{{drHidden}}" style="position: absolute; top: 52px; right: 0; bottom: 0; width: 420px; z-index: 5; background: #FFFFFF; border-left: 1px solid #E4E4E7; box-shadow: -12px 0 30px rgba(14,15,17,0.08); transform: translateX({{drX}}%); transition: transform 320ms cubic-bezier(0.32,0.72,0,1); display: flex; flex-direction: column">
+<div style="height: 48px; flex: none; padding: 0 12px 0 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #F0F0F2">
+<span style="font-size: 14px; font-weight: 800">{{drTitle}}</span>
+<span class="num" style="font-size: 12px; font-weight: 700; color: #8A8D94">{{drN}}명</span>
+<button class="tap" aria-label="닫기" onClick="{{drClose}}" style="margin-left: auto; width: 30px; height: 30px; border-radius: 15px; display: grid; place-items: center; background: #F4F4F5">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="display: grid; grid-template-columns: 64px 48px 48px 60px 1fr; gap: 8px; padding: 8px 16px; font-size: 11px; font-weight: 800; color: #8A8D94; background: #FAFAFA">
+<span>환자</span><span>검사</span><span>결정</span><span>안내</span><span>다음 계획</span>
+</div>
+<div class="scroll" style="flex: 1; overflow-y: auto">
+<sc-for list="{{drRows}}" as="r" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 64px 48px 48px 60px 1fr; gap: 8px; align-items: center; padding: 9px 16px; border-bottom: 1px solid #F0F0F2; background: {{r.bg}}">
+<span class="num" style="font-size: 12px; font-weight: 800">{{r.id}}</span>
+<span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">{{r.scan}}</span>
+<span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">{{r.dec}}</span>
+<span class="num" style="font-size: 12px; font-weight: 700; color: {{r.viaInk}}">{{r.via}}</span>
+<span class="num" style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.next}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
