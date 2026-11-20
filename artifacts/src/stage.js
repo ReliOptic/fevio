@@ -7,7 +7,7 @@ function stageBox() {
   var vw = document.documentElement.clientWidth, vh = window.innerHeight, W, H, portrait = vw < 760;
   if (!portrait) { W = Math.min(vw - 32, 1280); H = Math.round(W * 9 / 16); var maxH = vh - bh - 36; if (H > maxH) { H = Math.max(440, maxH); W = Math.round(H * 16 / 9); } }
   else { W = vw - 20; H = Math.min(vh - bh - 24, Math.round(W * 16 / 9)); }
-  var sub = portrait ? 74 : 64, pad = portrait ? 10 : 22;
+  var sub = portrait ? 128 : 104, pad = portrait ? 10 : 22;
   return { W: W, H: H, portrait: portrait, ix: pad, iy: pad, iw: W - pad * 2, ih: H - pad - sub };
 }
 function placements(mode, b) {
