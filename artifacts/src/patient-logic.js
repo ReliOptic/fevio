@@ -351,8 +351,10 @@ class App {
   }
   startSym() { this.open({ conv: 'sym', curFrom: this.u.curFrom }); this.push([fv('어떤 게 불편하세요?')], { conv: 'sym' }); }
   symCard(t) {
-    var s = S();
-    this.push([me(t), card('병원에 바로 알려 주세요', clinicN() + (s.phone ? '\n' + s.phone : '\n병원 전화번호를 나 · 설정에 넣어 두면 여기서 바로 보여요') + '\n숨이 많이 차거나 의식이 흐려지면 119', 'Fevio는 증상을 판단하지 않아요', 'alert', s.phone ? [this.copyAct('번호 복사', s.phone)] : [])], { conv: 'menu' });
+    var s = S(), self = this, acts = [{ t: '119에 전화', href: 'tel:119', bg: '#D92D20', ink: '#FFFFFF', edge: 'none' }];
+    if (s.phone) acts.push({ t: '병원에 전화', href: 'tel:' + s.phone.replace(/[^0-9+]/g, ''), bg: INK, ink: '#FFFFFF', edge: 'none' });
+    if (s.share) acts.push({ t: ptN() + ' 님에게 알리기', bg: '#FFFFFF', ink: INK, edge: 'inset 0 0 0 1.5px ' + LINE, tap: () => { put('settings/main', { alert: { at: nowMs(), what: t, seen: null } }, true); self.say(ptN() + ' 님 화면 맨 위에 알렸어요'); } });
+    this.push([me(t), card('지금 바로 연락하세요', clinicN() + (s.phone ? '  ' + s.phone : '\n병원 번호를 나 · 설정에 넣어 두면 바로 걸 수 있어요') + '\n숨이 차거나, 배가 심하게 아프거나, 어지러우면 119', '누르면 바로 전화가 걸려요 · Fevio는 증상을 판단하지 않아요', 'alert', acts)], { conv: 'menu' });
   }
   copyAct(label, text) {
     var self = this;
@@ -672,7 +674,7 @@ class App {
       var edge = c2 ? (c2.kind === 'alert' ? ALERT : (c2.kind === 'read' ? INK : accent)) : INK;
       return { hasImg: !!m.imgUrl, imgs: m.imgUrl ? [{ h: 150, bg: '#E4E4E7 url(' + m.imgUrl + ') center / cover no-repeat', icon: '', ic: 0, pii: false, label: '', cap: false }] : [], align: mine ? 'flex-end' : 'flex-start', hasWho: false, who: '', hasText: !!m.text, text: m.text || '',
         radius: mine ? '18px 18px 6px 18px' : '18px 18px 18px 6px', bg: mine ? INK : '#F4F4F5', ink: mine ? '#FFFFFF' : INK,
-        hasCard: !!c2, kicker: c2 ? c2.kicker : '', body: c2 ? c2.body : '', foot: c2 ? c2.foot : '', edge: edge, hasActs: !!(c2 && c2.acts.length), acts: c2 ? c2.acts : [] };
+        hasCard: !!c2, kicker: c2 ? c2.kicker : '', body: c2 ? c2.body : '', foot: c2 ? c2.foot : '', edge: edge, hasActs: !!(c2 && c2.acts.length), acts: c2 ? c2.acts.map((a) => Object.assign({}, a, { hasHref: !!a.href, noHref: !a.href, tap: a.tap || NOOP })) : [] };
     }).filter(Boolean);
     var chips = u.curtain ? this.chipsFor().map((c) => ({ label: c.label, act: c.act, bg: c.primary ? INK : '#FFFFFF', ink: c.primary ? '#FFFFFF' : INK, edge: c.primary ? 'none' : 'inset 0 0 0 1.5px ' + LINE })) : [];
     var tEmpty = u.thread.length === 0;
@@ -796,6 +798,9 @@ class App {
       pTabTitle: { today: '오늘', plan: '일정', together: '함께' }[pTab], pTabSub: pTab === 'today' ? dateLabel : '',
       pOpenSettings: () => self.pSay('공유 범위는 ' + meN() + ' 님이 정해요'), pTabs: tabsFor('partner'),
       pOff: !shareOn, pOffText: meN() + ' 님이 공유를 잠시 멈췄어요',
+      pAlert: !!(shareOn && s.alert && !s.alert.seen && nowMs() - s.alert.at < 6 * 3600e3), pAlertTitle: meN() + ' 님이 몸이 불편하다고 알렸어요',
+      pAlertBody: s.alert ? hm(new Date(s.alert.at)) + ' · ' + (s.alert.what || '') + (s.phone ? '\n병원 ' + s.phone : '') : '',
+      pAlertSeen: () => put('settings/main', { alert: Object.assign({}, s.alert, { seen: nowMs() }) }, true),
       pIsFlow: pTab === 'today' && shareOn, pFlow: ptl.after, pFlowPast: ptl.before, pPlanAnchor: '', pPlanLine: ptl.line, pTlTop: 92, pOnTl: NOOP,
       pHasPlan: pTab === 'today' && shareOn && !!plan, pPlanRows: plan ? planRows(plan.rows.filter((r) => s.share >= 2 || r[0] !== '그때까지')) : [],
       pAckT: plan && plan.acked ? meN() + ' 확인함' : meN() + ' 확인 전', pAckBg: plan && plan.acked ? INK : '#F4F4F5', pAckInk: plan && plan.acked ? '#FFFFFF' : INK2,

@@ -138,7 +138,7 @@ var ILLOS = {
     + POP(T(560, 250, '찰칵', 26, { bold: true, fill: ACC }), 1.5, 560, 250) + cardDoodle(260, 120, 230, 76, 1.6, ['채취 후 안내', '내일 09:40 연구실 전화'], { size: 18 }), '회복실 안내문도 그 자리에서 찍어요'),
   symptom: () => svgWrap(
     moon(660, 100, 0.1) + person(260, 470, 0.2, { hair: 'long', pose: 'belly' }) + F(T(300, 260, '!', 40, { bold: true }), 0.9)
-    + phoneDoodle(420, 150, 200, 300, 0.8, cardDoodle(432, 190, 176, 120, 1.2, ['병원에 바로', '02-1234-5678', '응급하면 119'], { size: 16, stroke: '#D92D20' }))
+    + phoneDoodle(420, 150, 200, 300, 0.8, cardDoodle(432, 190, 176, 120, 1.2, ['119에 전화', '병원에 전화', '민준에게 알리기'], { size: 16, stroke: '#D92D20' }))
     + arrow('M630 300 C 680 300, 700 330, 710 370', 1.6, { head: 'M696 360 l14 12 l6 -16' }) + POP(T(720, 420, '☎', 44, { anchor: 'middle' }), 2.2, 720, 410), '판단 대신, 연락할 곳을 바로 보여 줘요'),
   together: () => svgWrap(
     sofa(150, 470, 500, 0.1) + person(320, 472, 0.3, { hair: 'long', pose: 'phone' }) + person(470, 472, 0.4, { hair: 'short', pose: 'phone' })

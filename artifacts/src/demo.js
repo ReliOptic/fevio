@@ -50,7 +50,7 @@ async function type(root, sel, text) {
   await wait(320);
 }
 async function say(fevioText) { await type(PT(), '#f3ask', fevioText); await tap(PT(), 'button[aria-label="보내기"]'); }
-function caption(day, text) { DEMO.day = day; DEMO.caption = text; drawBar(); var sb = document.getElementById('subtitle'); if (sb) { sb.classList.remove('in'); void sb.offsetWidth; sb.textContent = text; sb.classList.add('in'); } }
+function caption(day, text) { DEMO.day = day; DEMO.caption = text; drawBar(); var sb = document.getElementById('subtitle'); if (sb) { sb.classList.remove('in'); void sb.offsetWidth; sb.textContent = text; sb.style.visibility = text ? '' : 'hidden'; if (text) sb.classList.add('in'); } }
 async function goTab(name) { await tap(PT(), 'div[style*="1fr auto 1fr"] button', name); await wait(300); }
 async function closeCurtain() { if (app.u.curtain) { await tap(PT(), 'button[aria-label="Fevio 닫기"]'); await wait(500); } }
 async function openFevio() { await tap(PT(), 'button[aria-label="Fevio 열기"], button[aria-label="예약하기 · Fevio 열기"]'); await wait(400); }
@@ -77,6 +77,10 @@ function smsSVG(lines) {
 }
 var layer = () => document.getElementById('cam-layer');
 function showLayer(html, dark) { var l = layer(); l.innerHTML = '<div class="cam-in">' + html + '<div class="ly-sb' + (dark ? ' dark' : '') + '"><span class="num">' + nowHM() + '</span><span>●●● ◔ ▮</span></div><div class="ly-island"></div></div>'; l.hidden = false; requestAnimationFrame(() => l.classList.add('on')); }
+async function callScreen(num) {
+  showLayer('<div class="call"><span class="call-n num">' + num + '</span><span class="call-s">발신 중…</span><span class="call-demo">시연 화면이에요 · 실제로 걸지 않아요</span><span class="call-end" aria-hidden="true"></span></div>', true);
+  await wait(2600); await hideLayer(); await wait(300);
+}
 async function hideLayer() { var l = layer(); l.classList.remove('on'); await sleep(320); l.hidden = true; l.innerHTML = ''; }
 async function cameraShot(paperUrl) {
   showLayer('<div class="cam"><div class="cam-top"><span>⚡︎</span><span class="cam-mode">사진</span><span>⌄</span></div>'
@@ -118,8 +122,10 @@ async function browserHandoff() {
   await wait(300); layer().querySelector('.br').classList.add('loaded'); await wait(2600);
   await tap(layer(), '.br-back'); await hideLayer(); await wait(400);
 }
-var SCENES = [
+var PATIENT_SCENES = [
   { t: '시작', run: async () => {
+    caption('Fevio · 환자의 하루', '');
+    await stage('illo', 'titlePatient'); await wait(3000);
     caption('시작하기 전', '시험관 주기 동안 병원 안내는 종이, 문자, 전화로 흩어지고 둘이 따로 기억해요.');
     await stage('illo', 'scatter'); await wait(4200);
   } },
@@ -245,9 +251,15 @@ var SCENES = [
   } },
   { t: '9일째 · 몸이 불편할 때', run: async () => {
     setClock(9, '22:10'); app.render(); await stage('illo-phone', 'symptom');
-    caption('9일째 · ' + mmdd(9) + ' 22:10', '배가 아프고 부를 때, Fevio는 판단하지 않고 병원 번호와 119를 바로 보여 줘요.');
+    caption('9일째 · ' + mmdd(9) + ' 22:10', '배가 아프고 많이 부를 때, 버튼 하나로 119나 병원에 바로 전화가 걸려요.');
     await wait(1200); await openFevio(); await tap(PT(), 'button', '몸이 불편해요');
-    await tap(PT(), 'button', '배가 많이 부르고 아파요'); await wait(2600);
+    await tap(PT(), 'button', '배가 많이 부르고 아파요'); await wait(1600);
+    await stage('duo');
+    caption('9일째 · ' + mmdd(9) + ' 22:10', '민준에게도 한 번에 알려요. 민준 폰 맨 위에 바로 떠요.');
+    await tap(PT(), 'button', '민준 님에게 알리기'); await wait(2600);
+    caption('9일째 · ' + mmdd(9) + ' 22:11', '119는 누르는 순간 걸려요. 시연에서는 실제로 걸지 않아요.');
+    await stage('solo'); await tap(PT(), 'a', '119에 전화', true); await callScreen('119'); 
+    await stage('duo'); await tap(PR(), 'button', '봤어요'); await wait(800);
     await closeCurtain();
   } },
   { t: '11일째 · 이식', run: async () => {
@@ -261,9 +273,26 @@ var SCENES = [
     await stage('illo-duo', 'together'); await wait(4600);
   } }
 ];
+var SCENES = PATIENT_SCENES;
+var END_CAP = {
+  patient: ['시연 끝', '실제로 쓰실 때는 시연 기록이 남지 않아요. 내 일정으로 시작해 보세요.'],
+  clinic: ['병원 편 끝', '환자가 확인한 일정이 병원의 흐름을 고르게 만들어요. 다시 보려면 위에서 다시 시작하세요.']
+};
 
-async function demoStart() {
+/* ----- background music: Bach, Goldberg Variations BWV 988 – Aria, played by Kimiko Ishizaka (The Open Goldberg Variations, CC0) ----- */
+var BGM = { el: null, on: true, fadeT: null };
+function bgmEl() { if (!BGM.el) { BGM.el = new Audio('bgm-aria.mp3'); BGM.el.loop = true; BGM.el.preload = 'auto'; BGM.el.volume = 0; } return BGM.el; }
+function bgmFade(to, ms, then) {
+  var a = bgmEl(); clearInterval(BGM.fadeT); var from = a.volume, t0 = Date.now();
+  BGM.fadeT = setInterval(() => { var k = Math.min(1, (Date.now() - t0) / ms); a.volume = Math.max(0, Math.min(1, from + (to - from) * k)); if (k >= 1) { clearInterval(BGM.fadeT); if (then) then(); } }, 50);
+}
+function bgmPlay() { if (!BGM.on) return; var a = bgmEl(); var p = a.play(); if (p && p.catch) p.catch(() => {}); bgmFade(0.32, 1800); }
+function bgmPause() { if (!BGM.el) return; bgmFade(0, 500, () => BGM.el.pause()); }
+function bgmStop() { if (!BGM.el) return; bgmFade(0, 1400, () => { BGM.el.pause(); BGM.el.currentTime = 0; }); }
+
+async function demoStart(reel) {
   if (DEMO.running) return;
+  DEMO.reel = reel === 'clinic' ? 'clinic' : 'patient'; SCENES = DEMO.reel === 'clinic' ? CLINIC_SCENES : PATIENT_SCENES; bgmPlay();
   DEMO.real = { D: D, db: db, mem: mem, assets: assets }; assets = null;   // demo pictures never upload
   DEMO.running = true; DEMO.paused = false; DEMO.stop = false; DEMO.scene = -1; DEMO.start = mondayOf(today0());   // the demo cycle starts on a Monday so each week is full
   db = null; mem = {};
@@ -272,32 +301,34 @@ async function demoStart() {
   resetApp(); setClock(1, '09:10'); drawBar(); stageOn(); window.scrollTo({ top: 0, behavior: 'smooth' });
   try {
     for (var i = 0; i < SCENES.length; i++) { DEMO.scene = i; drawBar(); await SCENES[i].run(); }
-    DEMO.scene = SCENES.length; caption('시연 끝', '실제로 쓰실 때는 시연 기록이 남지 않아요. 내 일정으로 시작해 보세요.');
+    DEMO.scene = SCENES.length; caption(END_CAP[DEMO.reel][0], END_CAP[DEMO.reel][1]); setTimeout(bgmStop, 4000);
   } catch (e) { if (e.message !== 'demo-stop') { console.error(e); } }
   if (DEMO.stop) demoEnd();
 }
 function resetApp() { var l = document.getElementById('cam-layer'); if (l) { l.hidden = true; l.innerHTML = ''; l.classList.remove('on'); } DEMO.pick = null; var fresh = new App(); app.u = fresh.u; app.seen = new Set(); app.fitKey = null; app.pFitKey = null; app.render(); }
 function demoEnd() {
   if (!DEMO.real) return;
-  DEMO.stop = true; DEMO.running = false; DEMO.paused = false;
+  DEMO.stop = true; DEMO.running = false; DEMO.paused = false; bgmStop();
   D = DEMO.real.D; db = DEMO.real.db; mem = DEMO.real.mem; assets = DEMO.real.assets; DEMO.real = null; CLOCK.base = null;
   resetApp(); drawBar(); stageOff();
   if (app.onboarding()) app.startOnboarding(); app.reanchor(false);
 }
 function drawBar() {
   var bar = document.getElementById('demo-bar'); if (!bar) return;
-  if (!DEMO.running) { bar.innerHTML = '<button class="demo-start" id="demo-play" type="button"><span class="dot"></span>데모 시연하기</button>'; bar.className = 'demo-bar idle'; return; }
+  if (!DEMO.running) { bar.innerHTML = '<button class="demo-start" id="demo-play" type="button"><span class="dot"></span>데모 시연하기</button><button class="demo-start alt" id="demo-clinic" type="button">병원에 좋은 이유</button>'; bar.className = 'demo-bar idle'; return; }
   var done = DEMO.scene >= SCENES.length;
   bar.className = 'demo-bar on';
   bar.innerHTML = '<div class="demo-top"><span class="demo-day num">' + escH(DEMO.day) + '</span><span class="demo-steps">' + SCENES.map((s, i) => '<i class="' + (i < DEMO.scene ? 'd' : (i === DEMO.scene ? 'c' : '')) + '" title="' + escH(s.t) + '"></i>').join('') + '</span>'
-    + '<span class="demo-ctl">' + (done ? '' : '<button type="button" id="demo-pause">' + (DEMO.paused ? '계속' : '일시정지') + '</button><button type="button" id="demo-speed" class="num">' + DEMO.speed + 'x</button>')
+    + '<span class="demo-ctl">' + (done ? '' : '<button type="button" id="demo-pause">' + (DEMO.paused ? '계속' : '일시정지') + '</button><button type="button" id="demo-speed" class="num">' + DEMO.speed + 'x</button><button type="button" id="demo-music" aria-pressed="' + BGM.on + '" aria-label="배경 음악">' + (BGM.on ? '음악 켬' : '음악 끔') + '</button>')
     + '<button type="button" id="demo-end">' + (done ? '내 일정으로 시작' : '끝내기') + '</button></span></div>'
     + (done ? '<p class="demo-cap" aria-live="polite">' + escH(DEMO.caption) + '</p>' : '');
 }
 document.addEventListener('click', (e) => {
   var t = e.target.closest('button'); if (!t || !t.id || t.id.indexOf('demo-') !== 0) return;
-  if (t.id === 'demo-play') demoStart();
-  if (t.id === 'demo-pause') { DEMO.paused = !DEMO.paused; drawBar(); }
+  if (t.id === 'demo-play') demoStart('patient');
+  if (t.id === 'demo-clinic') demoStart('clinic');
+  if (t.id === 'demo-pause') { DEMO.paused = !DEMO.paused; if (DEMO.paused) bgmPause(); else bgmPlay(); drawBar(); }
+  if (t.id === 'demo-music') { BGM.on = !BGM.on; if (BGM.on && !DEMO.paused) bgmPlay(); else bgmPause(); drawBar(); }
   if (t.id === 'demo-speed') { DEMO.speed = DEMO.speed === 1 ? 2 : 1; drawBar(); }
   if (t.id === 'demo-end') { if (DEMO.scene >= SCENES.length) demoEnd(); else { DEMO.stop = true; DEMO.paused = false; } }
 });

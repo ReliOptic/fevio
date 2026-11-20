@@ -115,6 +115,15 @@ pat = pat[:a] + inp.replace('<input id="f3ask" value="{{draftText}}"', '<textare
 a = pat.index('<sc-if value="{{photoPick}}"'); b = block(pat, a, 'sc-if'); pat = pat[:a] + pat[b:].lstrip('\n')
 par = rep(par, 'font-size: 13px; font-weight: 800">민</button>', 'font-size: 13px; font-weight: 800">{{pMeInitial}}</button>')
 par = rep(par, '>서연이 공유를 잠시 멈췄어요<', '>{{pOffText}}<')
+# card actions can be phone links (119, clinic)
+BTN = '<button class="tap" onClick="{{a.tap}}" style="height: 36px; padding: 0 14px; border-radius: 18px; font-size: 13px; font-weight: 800; background: {{a.bg}}; color: {{a.ink}}; box-shadow: {{a.edge}}">{{a.t}}</button>'
+pat = rep(pat, BTN, '<sc-if value="{{a.hasHref}}" hint-placeholder-val="{{ false }}"><a class="tap" href="{{a.href}}" target="_top" style="height: 36px; padding: 0 14px; border-radius: 18px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; text-decoration: none; background: {{a.bg}}; color: {{a.ink}}; box-shadow: {{a.edge}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2"/></svg>{{a.t}}</a></sc-if><sc-if value="{{a.noHref}}" hint-placeholder-val="{{ true }}">' + BTN + '</sc-if>', n=pat.count(BTN))
+# partner: a quiet but clear banner when the patient says she feels unwell
+POFF = par.index('<sc-if value="{{pOff}}"'); POFF_END = block(par, POFF, 'sc-if')
+par = par[:POFF_END] + ('\n<sc-if value="{{pAlert}}" hint-placeholder-val="{{ false }}"><div class="in" role="alert" style="position: absolute; left: 14px; right: 14px; top: 96px; z-index: 6; padding: 14px 16px; border-radius: 20px; background: #FFF6F5; box-shadow: inset 0 0 0 1.5px #F2B8B1, 0 12px 28px rgba(14,15,17,0.14); display: flex; flex-direction: column; gap: 8px">'
+  '<span style="font-size: 14px; font-weight: 800; color: #B42318">{{pAlertTitle}}</span><span class="num" style="white-space: pre-line; font-size: 13px; line-height: 19px; font-weight: 600; color: #2B2D31">{{pAlertBody}}</span>'
+  '<span style="display: flex; gap: 8px"><a class="tap" href="tel:119" target="_top" style="height: 36px; padding: 0 14px; border-radius: 18px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 800; text-decoration: none; background: #D92D20; color: #FFFFFF">119에 전화</a>'
+  '<button class="tap" onClick="{{pAlertSeen}}" style="height: 36px; padding: 0 14px; border-radius: 18px; font-size: 13px; font-weight: 800; background: #FFFFFF; color: #0E0F11; box-shadow: inset 0 0 0 1.5px #E4E4E7">봤어요</button></span></div></sc-if>') + par[POFF_END:]
 for t, n in ((pat, 'patient'), (par, 'partner')):
     left = [x for x in re.findall(r'>[^<{]*[가-힣][^<{]*<', t) if re.search('서연|민준|서울', x)]
     assert not left, (n, left)
@@ -250,9 +259,41 @@ body.demo-stage .slot .cap{display:none}
 .tapfx{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(31,91,255,.35);box-shadow:0 0 0 2px rgba(31,91,255,.5);pointer-events:none;z-index:100;animation:tapfx .7s ease-out forwards}
 @keyframes tapfx{0%{transform:scale(.45);opacity:1}100%{transform:scale(1.6);opacity:0}}
 @media (prefers-reduced-motion:reduce){.tapfx{animation:none;opacity:.6}}
+
+/* ---- classic shell: ivory paper, serif type, gold hairlines ---- */
+:root{--page:#F3EFE7;--ink:#1C1A17;--gold:#A8875A;--paper:#FBF8F1;--serif:'Noto Serif KR','Nanum Myeongjo','Apple SD Gothic Neo',serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#1A1814;--paper:#24211B;--ink:#F3EFE7}}
+:root[data-theme="dark"]{--page:#1A1814;--paper:#24211B;--ink:#F3EFE7}
+body{background:var(--page);background-image:radial-gradient(ellipse at 50% 0%,rgba(168,135,90,.10),transparent 60%)}
+.cap{font-family:var(--serif);font-weight:500;letter-spacing:0}
+.cap b{font-weight:700}
+.demo-bar.idle{gap:12px;flex-wrap:wrap}
+.q .demo-start{height:46px;padding:0 24px;border-radius:23px;background:var(--ink);color:var(--page);font:600 15px/1 var(--serif);letter-spacing:.02em;box-shadow:0 10px 24px -10px rgba(28,26,23,.45),inset 0 0 0 1px rgba(168,135,90,.55)}
+.q .demo-start .dot{background:var(--gold)}
+.q .demo-start.alt{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--gold)}
+.demo-bar.on{background:rgba(251,248,241,.94);box-shadow:0 0 0 1px rgba(168,135,90,.35),0 12px 30px -12px rgba(28,26,23,.25);color:#1C1A17}
+.demo-day{font-family:var(--serif);font-weight:700;letter-spacing:0}
+.demo-steps i{background:#E6DFD2;height:3px}
+.demo-steps i.d{background:#1C1A17}
+.demo-steps i.c{background:#A8875A}
+.demo-ctl button{background:transparent;box-shadow:inset 0 0 0 1px #D9CFBE;font-family:var(--serif);font-weight:600;color:#1C1A17}
+.demo-cap{font-family:var(--serif);font-weight:500}
+body.demo-stage .phones{background:#F1ECE2;box-shadow:inset 0 0 0 1px rgba(168,135,90,.35),inset 0 0 0 9px #F1ECE2,inset 0 0 0 10px rgba(168,135,90,.28),0 40px 80px -40px rgba(28,26,23,.45)}
+body.demo-stage .subtitle{font-family:var(--serif);font-weight:500;letter-spacing:0;background:rgba(28,26,23,.92);box-shadow:inset 0 0 0 1px rgba(168,135,90,.4)}
+.illo{background:#FBF8F1;box-shadow:0 0 0 1px rgba(168,135,90,.22)}
+.illo .grow{transform:scaleY(0);animation:grow calc(800ms * var(--ts,1)) cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--d,0s) * var(--ts,1))}
+.illo .growx{transform:scaleX(0);animation:growx calc(800ms * var(--ts,1)) cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--d,0s) * var(--ts,1))}
+@keyframes grow{to{transform:scaleY(1)}}
+@keyframes growx{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.illo .grow,.illo .growx{animation:none;transform:none}}
+.call{position:absolute;inset:0;background:linear-gradient(180deg,#3A3631,#1E1C19);display:flex;flex-direction:column;align-items:center;padding-top:120px;gap:10px;color:#fff;font-family:'Pretendard',-apple-system,system-ui,sans-serif}
+.call-n{font-size:44px;font-weight:600;letter-spacing:.02em}
+.call-s{font-size:16px;opacity:.75}
+.call-demo{margin-top:18px;font-size:12px;opacity:.6}
+.call-end{position:absolute;bottom:90px;width:68px;height:68px;border-radius:50%;background:#E5483B}
 '''
 logic = open(D + 'apps/logic.js').read(); runtime = open(D + 'apps/runtime.js').read()
-html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap">\n<style>' + css + page_css + '</style>\n'
+html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700&display=swap">\n<style>' + css + page_css + '</style>\n'
         '<main class="stage q"><div class="demo-bar idle" id="demo-bar"></div><div class="phones">'
         '<section class="slot" data-who="pt" aria-label="환자 아이폰"><div class="frame-wrap"><div class="frame" id="ph-patient"></div><div class="cam-layer" id="cam-layer" hidden></div></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
         '<section class="slot" data-who="pr" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
@@ -261,6 +302,6 @@ html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides"
         '<input id="file-album" class="sr" type="file" accept="image/*" aria-label="앨범에서 고르기">'
         '<input id="file-post" class="sr" type="file" accept="image/*" multiple aria-label="글에 넣을 사진">\n'
         '<script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js"></script>\n'
-        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/stage.js').read() + '\n' + open(D + 'apps/demo.js').read() + '\n</script>\n')
+        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/stage.js').read() + '\n' + open(D + 'apps/demo.js').read() + '\n' + open(D + 'apps/clinic_reel.js').read() + '\n</script>\n')
 open(D + 'apps/fevio-app.html', 'w').write(html)
 print('bytes', len(html.encode()))
