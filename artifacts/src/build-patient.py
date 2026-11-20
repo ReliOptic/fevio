@@ -137,7 +137,8 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18),inset 0 0 0 5px #0b0b0c,0 2px 0 rgba(255,255,255,.06),0 40px 70px -30px rgba(14,15,17,.55),0 18px 36px -12px rgba(14,15,17,.28)}
 .device::before{content:"";position:absolute;left:-3px;top:150px;width:4px;height:34px;border-radius:2px 0 0 2px;background:#2b2c30;box-shadow:0 56px 0 #2b2c30,0 120px 0 #2b2c30}
 .device::after{content:"";position:absolute;right:-3px;top:210px;width:4px;height:90px;border-radius:0 2px 2px 0;background:#2b2c30}
-.screen{isolation:isolate}
+.screen{isolation:isolate;transform:translateZ(0)}
+.screen div[aria-hidden="true"]{visibility:hidden!important}
 .sb{position:absolute;left:0;right:0;top:0;height:46px;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;box-sizing:border-box;pointer-events:none}
 .sb-t{font-size:15px;font-weight:700;color:#0E0F11;letter-spacing:-.01em}
 .sb-i{display:flex;align-items:center;gap:6px}
@@ -146,6 +147,20 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 @keyframes ringgo{to{stroke-dashoffset:var(--c)}}
 @media (prefers-reduced-motion:reduce){.ring-breathe{animation:none}}
 .frame-wrap{position:relative}
+body.demo-stage .phones{position:relative;display:block;margin:0 auto;--s:1}
+body.demo-stage .slot{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 820ms cubic-bezier(.65,0,.35,1),opacity 520ms ease;will-change:transform}
+body.demo-stage .slot .cap{display:none}
+.illo{position:absolute;left:0;top:0;width:0;height:0;opacity:0;pointer-events:none;border-radius:28px;background:#FBF8F1;box-shadow:0 0 0 1px rgba(27,27,27,.08),0 24px 60px -24px rgba(14,15,17,.3);overflow:hidden;transition:left 820ms cubic-bezier(.65,0,.35,1),top 820ms cubic-bezier(.65,0,.35,1),width 820ms cubic-bezier(.65,0,.35,1),height 820ms cubic-bezier(.65,0,.35,1),opacity 500ms ease}
+.illo.on{opacity:1}
+.illo svg{display:block;width:100%;height:100%}
+.illo .dr{stroke-dasharray:1;stroke-dashoffset:1;animation:dr 900ms ease forwards;animation-delay:var(--d,0s)}
+@keyframes dr{to{stroke-dashoffset:0}}
+.illo .pp{transform:scale(0);animation:pp 460ms cubic-bezier(.34,1.56,.64,1) forwards;animation-delay:var(--d,0s)}
+@keyframes pp{to{transform:scale(1)}}
+.illo .fd{opacity:0;animation:fd 500ms ease forwards;animation-delay:var(--d,0s)}
+@keyframes fd{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.illo .dr,.illo .pp,.illo .fd{animation:none;stroke-dashoffset:0;transform:none;opacity:1}}
+
 .cam-layer{position:absolute;left:calc(12px * var(--s));top:calc(12px * var(--s));width:calc(360px * var(--s));height:calc(800px * var(--s));border-radius:calc(50px * var(--s));overflow:hidden;z-index:5;transform:translateY(8%);opacity:0;transition:transform 320ms cubic-bezier(.32,.72,0,1),opacity 220ms ease}
 .cam-layer.on{transform:none;opacity:1}
 .cam-in{position:absolute;left:0;top:0;width:360px;height:800px;transform:scale(var(--s));transform-origin:0 0;font-family:'Pretendard',-apple-system,system-ui,sans-serif}
@@ -231,15 +246,15 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 @media (prefers-reduced-motion:reduce){.tapfx{animation:none;opacity:.6}}
 '''
 logic = open(D + 'apps/logic.js').read(); runtime = open(D + 'apps/runtime.js').read()
-html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<style>' + css + page_css + '</style>\n'
+html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap">\n<style>' + css + page_css + '</style>\n'
         '<main class="stage q"><div class="demo-bar idle" id="demo-bar"></div><div class="phones">'
-        '<section class="slot" aria-label="환자 아이폰"><div class="frame-wrap"><div class="frame" id="ph-patient"></div><div class="cam-layer" id="cam-layer" hidden></div></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
-        '<section class="slot" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
-        '</div></main>\n'
+        '<section class="slot" data-who="pt" aria-label="환자 아이폰"><div class="frame-wrap"><div class="frame" id="ph-patient"></div><div class="cam-layer" id="cam-layer" hidden></div></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
+        '<section class="slot" data-who="pr" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
+        '<div class="illo" id="illo" aria-live="polite"></div></div></main>\n'
         '<input id="file-camera" class="sr" type="file" accept="image/*" capture="environment" aria-label="사진 찍기">'
         '<input id="file-album" class="sr" type="file" accept="image/*" aria-label="앨범에서 고르기">'
         '<input id="file-post" class="sr" type="file" accept="image/*" multiple aria-label="글에 넣을 사진">\n'
         '<script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js"></script>\n'
-        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/demo.js').read() + '\n</script>\n')
+        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/stage.js').read() + '\n' + open(D + 'apps/demo.js').read() + '\n</script>\n')
 open(D + 'apps/fevio-app.html', 'w').write(html)
 print('bytes', len(html.encode()))
