@@ -20,7 +20,7 @@ def common(t, role):
     assert lines[0].startswith('<div style="display: flex; flex-direction: column; gap: 8px">') and lines[1].startswith('<span style="font-size: 12px')
     t = '\n'.join(['<div class="device">'] + lines[2:])
     t = rep(t, '<div style="position: relative; height: 800px; border-radius: 44px; background: #0E0F11; overflow: hidden; box-shadow: inset 0 0 0 1px #E4E4E7">',
-            '<div class="screen" style="position: relative; height: 800px; border-radius: 50px; background: #0E0F11; overflow: hidden">' + SB)
+            '<div class="screen" style="position: relative; height: 800px; border-radius: 50px; background: #FFFFFF; overflow: hidden">' + SB)
     # memo: lock icon -> share state; edit form gets the share switch; partner sees shared memos
     lock_start = t.index('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A1')
     lock_end = t.index('</svg>', lock_start) + 6
@@ -32,6 +32,16 @@ def common(t, role):
     t = t[:c1] + ('\n<sc-if value="{{d.pMemo}}" hint-placeholder-val="{{ false }}"><span class="in" style="display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 10px; background: #F4F4F5; font-size: 13px; line-height: 18px; font-weight: 600; color: #575A62">'
                   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8D94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>'
                   '<span><span style="font-weight: 800; color: #0E0F11">{{d.pMemoWho}}</span> {{d.pMemoText}}</span></span></sc-if>') + t[c1:]
+    chip = '<sc-if value="{{r.hasChip}}" hint-placeholder-val="{{ false }}">'
+    ring = ('\n<sc-if value="{{r.hasRing}}" hint-placeholder-val="{{ false }}"><span class="in" style="align-self: flex-start; display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border-radius: 18px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7">'
+            '<svg class="ring-breathe" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" style="flex: none"><circle cx="22" cy="22" r="18" fill="none" stroke="#EEF0F3" stroke-width="5"></circle>'
+            '<circle cx="22" cy="22" r="18" fill="none" stroke="#1F5BFF" stroke-width="5" stroke-linecap="round" transform="rotate(-90 22 22)" style="stroke-dasharray: 113.1; stroke-dashoffset: {{r.ringOff}}; --c: 113.1; animation: ringgo {{r.ringSecs}}s linear forwards"></circle></svg>'
+            '<span style="display: flex; flex-direction: column; gap: 1px"><span class="num" style="font-size: 18px; line-height: 22px; font-weight: 800; letter-spacing: -0.02em">{{r.ringLeft}}</span><span class="num" style="font-size: 12px; font-weight: 700; color: #575A62">{{r.ringLabel}}</span></span></span></sc-if>')
+    pos = 0
+    while True:
+        i = t.find(chip, pos)
+        if i < 0: break
+        j = block(t, i, 'sc-if'); t = t[:j] + ring + t[j:]; pos = j + len(ring)
     # one native ad row under the day it fits (values are empty for the partner)
     w0 = t.index('<sc-for list="{{wk.days}}"'); d0 = t.index('<div onClick="{{d.tap}}"', w0); d1 = block(t, d0, 'div')
     t = t[:d1] + ('\n<sc-if value="{{d.hasAd}}" hint-placeholder-val="{{ false }}"><div class="in" style="flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 12px 8px 12px">'
@@ -53,7 +63,14 @@ pat = rep(pat, 'font-size: 15px; font-weight: 800">민준</span>', 'font-size: 1
 pat = rep(pat, 'aria-label="민준에게 보이는 범위"', 'aria-label="{{ptName}}에게 보이는 범위"')
 pat = rep(pat, '</span>주사로 키우는 중 · 다음 결정 토 오후</div>', '</span>{{doseNote}}</div>')
 pat = rep(pat, 'letter-spacing: -0.04em">21:00</span>', 'letter-spacing: -0.04em">{{doseTime}}</span>')
-pat = rep(pat, '>2분 남음 · 병원이 정한 시각<', '>{{doseLeft}}<')
+pat = rep(pat, '<span class="num" style="font-size: 15px; font-weight: 800; color: #1F5BFF; margin-top: 4px">2분 남음 · 병원이 정한 시각</span>',
+  '<div style="display: flex; align-items: center; gap: 16px; margin-top: 4px">'
+  '<svg class="ring-breathe" width="112" height="112" viewBox="0 0 120 120" aria-hidden="true" style="flex: none"><circle cx="60" cy="60" r="52" fill="none" stroke="#EEF0F3" stroke-width="10"></circle>'
+  '<circle cx="60" cy="60" r="52" fill="none" stroke="#1F5BFF" stroke-width="10" stroke-linecap="round" transform="rotate(-90 60 60)" style="stroke-dasharray: 326.7; stroke-dashoffset: {{doseRingOff}}; --c: 326.7; animation: ringgo {{doseRingSecs}}s linear forwards"></circle></svg>'
+  '<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="num" style="font-size: 34px; line-height: 38px; font-weight: 800; letter-spacing: -0.03em">{{doseCount}}</span>'
+  '<span style="font-size: 13px; font-weight: 700; color: {{doseLeftInk}}">{{doseLeft}}</span></span></div>')
+pat = rep(pat, 'border-radius: 28px; background: #FFFFFF; box-shadow: inset 0 0 0 2px #1F5BFF;', 'border-radius: 28px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px rgba(31,91,255,0.35);')
+pat = rep(pat, '<div style="display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-top: {{k.divider}}">', '<div onClick="{{k.tap}}" style="cursor: pointer; display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-top: {{k.divider}}">')
 # Fevio box takes a multi-line paste
 a = pat.index('<input id="f3ask"'); b = pat.index('>', a) + 1
 inp = pat[a:b]
@@ -90,6 +107,43 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 .sb{position:absolute;left:0;right:0;top:0;height:46px;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;box-sizing:border-box;pointer-events:none}
 .sb-t{font-size:15px;font-weight:700;color:#0E0F11;letter-spacing:-.01em}
 .sb-i{display:flex;align-items:center;gap:6px}
+.ring-breathe{animation:breathe 3.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.78}}
+@keyframes ringgo{to{stroke-dashoffset:var(--c)}}
+@media (prefers-reduced-motion:reduce){.ring-breathe{animation:none}}
+.frame-wrap{position:relative}
+.cam-layer{position:absolute;left:calc(12px * var(--s));top:calc(12px * var(--s));width:calc(360px * var(--s));height:calc(800px * var(--s));border-radius:calc(50px * var(--s));overflow:hidden;z-index:5;transform:translateY(8%);opacity:0;transition:transform 320ms cubic-bezier(.32,.72,0,1),opacity 220ms ease}
+.cam-layer.on{transform:none;opacity:1}
+.cam-in{position:absolute;left:0;top:0;width:360px;height:800px;transform:scale(var(--s));transform-origin:0 0;font-family:'Pretendard',-apple-system,system-ui,sans-serif}
+.cam{position:absolute;inset:0;background:#000;color:#fff;display:flex;flex-direction:column}
+.cam-top{height:96px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 12px;font-size:15px;font-weight:700;color:#FFD60A}
+.cam-mode{color:#fff;font-size:13px;letter-spacing:.08em}
+.cam-view{position:relative;flex:1;background:radial-gradient(ellipse at 50% 40%,#3a342c,#151311 75%);overflow:hidden;display:grid;place-items:center}
+.cam-paper{width:236px;transform:rotate(-7deg) scale(1.18);filter:blur(2px) brightness(.92);transition:transform 900ms cubic-bezier(.22,1,.36,1),filter 900ms ease;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.cam.locked .cam-paper{transform:rotate(-2deg) scale(1);filter:none}
+.cam-view i{position:absolute;width:30px;height:30px;border:3px solid #FFD60A;opacity:0;transition:opacity 300ms ease 400ms}
+.cam.locked .cam-view i{opacity:1}
+.cam-view .c1{left:40px;top:60px;border-right:0;border-bottom:0}.cam-view .c2{right:40px;top:60px;border-left:0;border-bottom:0}.cam-view .c3{left:40px;bottom:60px;border-right:0;border-top:0}.cam-view .c4{right:40px;bottom:60px;border-left:0;border-top:0}
+.cam-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;background:rgba(0,0,0,.55);padding:6px 10px;border-radius:10px;white-space:nowrap}
+.cam-bottom{height:170px;display:flex;align-items:center;justify-content:space-between;padding:0 34px 40px}
+.cam-thumb{width:44px;height:44px;border-radius:8px;background:#2a2a2c}
+.shutter{width:72px;height:72px;border-radius:36px;border:0;background:#fff;box-shadow:0 0 0 4px #000,0 0 0 7px #fff;cursor:pointer}
+.cam-cancel{font-size:16px;font-weight:600;width:44px;text-align:right}
+.cam-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.cam.flash .cam-flash{animation:camflash 300ms ease-out}
+@keyframes camflash{0%{opacity:.95}100%{opacity:0}}
+.album{position:absolute;inset:0;background:#fff;color:#0E0F11;display:flex;flex-direction:column}
+.alb-top{height:100px;display:grid;grid-template-columns:60px 1fr 60px;align-items:end;padding:0 16px 12px;font-size:16px;text-align:center}
+.alb-cancel{color:#1F5BFF;text-align:left;font-weight:600}
+.alb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.alb-t{display:block;aspect-ratio:1/1;border:0;padding:0;overflow:hidden;background:#eee}
+.alb-t img{width:100%;height:100%;object-fit:cover;object-position:top}
+.alb-desk{display:grid;place-items:center;width:100%;height:100%;background:linear-gradient(160deg,#8C7A66,#5E5044)}
+.alb-desk img{width:78%;height:auto;transform:rotate(-4deg);box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.alb-t.pick{outline:3px solid #1F5BFF;outline-offset:-3px}
+.alb-done{color:#1F5BFF;font-weight:800;text-align:right;cursor:pointer}
+.alb-preview{flex:1;display:grid;place-items:center;background:linear-gradient(160deg,#8C7A66,#5E5044)}
+.alb-preview img{width:76%;transform:rotate(-3deg);box-shadow:0 18px 40px rgba(0,0,0,.4)}
 .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:17px;background:#000;z-index:61;pointer-events:none}
 .homebar{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);width:128px;height:5px;border-radius:3px;background:#0E0F11;opacity:.85;z-index:61;pointer-events:none}
 .cap{font:600 13px/1.3 'Pretendard',-apple-system,system-ui,sans-serif;color:var(--cap);letter-spacing:-.01em}
@@ -118,7 +172,7 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 logic = open(D + 'apps/logic.js').read(); runtime = open(D + 'apps/runtime.js').read()
 html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<style>' + css + page_css + '</style>\n'
         '<main class="stage q"><div class="demo-bar idle" id="demo-bar"></div><div class="phones">'
-        '<section class="slot" aria-label="환자 아이폰"><div class="frame" id="ph-patient"></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
+        '<section class="slot" aria-label="환자 아이폰"><div class="frame-wrap"><div class="frame" id="ph-patient"></div><div class="cam-layer" id="cam-layer" hidden></div></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
         '<section class="slot" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
         '</div></main>\n'
         '<input id="file-camera" class="sr" type="file" accept="image/*" capture="environment" aria-label="사진 찍기">'

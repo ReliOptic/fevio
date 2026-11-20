@@ -57,7 +57,8 @@ document.addEventListener('keydown', (e) => {
   // Enter sends from the Fevio box on a keyboard; Shift+Enter keeps a line break for pasted notices.
   if (e.target.id === 'f3ask' && e.key === 'Enter' && !e.shiftKey && !e.isComposing && !('ontouchstart' in window)) { e.preventDefault(); app.submitText(); }
 });
-function pickFile(kind) { var el = document.getElementById('file-' + kind); if (el) { el.value = ''; el.click(); } }
+function pickFile(kind) {
+  if (typeof DEMO !== 'undefined' && DEMO.running && DEMO.pick) { DEMO.pick(kind); return; } var el = document.getElementById('file-' + kind); if (el) { el.value = ''; el.click(); } }
 document.addEventListener('change', (e) => {
   var t = e.target; if (!t.id || t.id.indexOf('file-') !== 0 || !t.files || !t.files.length) return;
   if (t.id === 'file-post') app.setState({ postFiles: app.u.postFiles.concat(Array.from(t.files).slice(0, 4 - app.u.postFiles.length).map((f) => ({ file: f, url: URL.createObjectURL(f) }))) });
