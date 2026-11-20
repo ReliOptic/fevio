@@ -1,6 +1,6 @@
 # 병원 운영 대시보드
 
-상태: 탐색 시안 · 실제 병원 검증 전
+상태: **대체됨** (2026-11-20). 환자별 업무 목록이 앞에 나오는 구성은 병원 운영 효율이 보이지 않아 프로세스 중심 '운영 현황'으로 바꿨다. 현재 기준은 `docs/specs/plan-handoff.md` §3. 아래 내용 중 '세는 규칙', '연결 끊김 처리', '열어 둔 행 고정'은 계속 유효하다.
 시안: 캔버스 '결정점' 페이지 `F3Loop.dc.html` 오른쪽 데스크톱 화면
 관련: `docs/specs/visit-scheduling.md`, `docs/specs/decision-points.md`, `docs/foundation/agent-operations.md`
 

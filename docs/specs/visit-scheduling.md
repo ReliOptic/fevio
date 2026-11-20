@@ -1,6 +1,6 @@
 # 일정 탭: 방문 시간 맞추기
 
-상태: 탐색 시안 · 실제 환자·병원 검증 전
+상태: **핵심 장면에서 뺌 · 예외 기능으로 보류** (2026-11-20). 병원이 시간 조정을 허용한 방문에만 쓴다. 핵심 장면은 `docs/specs/plan-handoff.md`. 저장·동시성 검증(§4-1)은 그대로 유효하다.
 시안: 캔버스 '결정점' 페이지 `F3Loop.dc.html` (환자 폰 왼쪽 탭 '일정'과 병원 패널의 '방문 협의')
 관련: `docs/specs/decision-points.md`, `docs/foundation/agent-operations.md`
 
