@@ -1,0 +1,744 @@
+<title>Fevio 환자 앱</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: patient pane (operable) and partner pane (live mirror) side by side; on phones one pane at a time with a switch. */
+:root{
+  --bg:#EEF0F3; --surface:#FFFFFF; --sunk:#F4F5F7; --ink:#0E0F11; --ink2:#565A63; --ink3:#8A8E96; --line:#E3E5E9;
+  --signal:#1F5BFF; --signal-soft:rgba(31,91,255,.10); --coral:#E5484D; --coral-soft:rgba(229,72,77,.10);
+  --on-ink:#FFFFFF; --shadow:0 1px 2px rgba(14,15,17,.06),0 8px 24px rgba(14,15,17,.06);
+  --font:'IBM Plex Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1012; --surface:#1A1B1E; --sunk:#232428; --ink:#F2F3F5; --ink2:#B3B6BD; --ink3:#7F838B; --line:#2D2F34;
+  --signal:#6A90FF; --signal-soft:rgba(106,144,255,.16); --coral:#FF6B6F; --coral-soft:rgba(255,107,111,.14);
+  --on-ink:#0E0F11; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1012; --surface:#1A1B1E; --sunk:#232428; --ink:#F2F3F5; --ink2:#B3B6BD; --ink3:#7F838B; --line:#2D2F34;
+  --signal:#6A90FF; --signal-soft:rgba(106,144,255,.16); --coral:#FF6B6F; --coral-soft:rgba(255,107,111,.14);
+  --on-ink:#0E0F11; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+button,input,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:10px}
+.num{font-variant-numeric:tabular-nums}
+.hatch{background-image:repeating-linear-gradient(135deg,var(--signal-soft) 0 6px,transparent 6px 12px)}
+.switch{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;justify-content:center;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg)}
+.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.seg button{position:relative;height:36px;padding:0 18px;border-radius:10px;font-weight:700;font-size:14px;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:4px;background:var(--signal)}
+.panes{display:block}
+.pane{position:relative;background:var(--bg);min-height:100%}
+.pane-label{display:none}
+.scroll{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;justify-content:center;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(transparent,var(--bg) 30%)}
+.tabs{display:flex;gap:4px;padding:5px;border-radius:24px;background:var(--surface);box-shadow:var(--shadow);width:min(100%,360px)}
+.tabs button{flex:1;height:46px;border-radius:19px;font-size:13px;font-weight:700;color:var(--ink2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tabs button[aria-current="page"]{background:var(--ink);color:var(--on-ink)}
+.tabs svg{width:18px;height:18px}
+.readonly .tabs{pointer-events:none}
+@media (min-width:880px){
+  .switch{display:none}
+  .panes{display:grid;grid-template-columns:repeat(2,minmax(0,400px));justify-content:center;gap:28px;padding:20px 24px}
+  .pane{height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:640px;border-radius:28px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+  .pane[hidden]{display:block!important}
+  .pane-label{display:flex;position:absolute;top:-1px;left:50%;transform:translateX(-50%);z-index:5;height:24px;padding:0 10px;border-radius:0 0 10px 10px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);align-items:center;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap}
+  .scroll{height:100%;overflow-y:auto;padding-left:16px;padding-right:16px;padding-bottom:110px}
+  .tabbar{position:absolute;padding:8px 16px 14px}
+}
+.head{display:flex;align-items:center;gap:8px;padding-top:30px;padding-bottom:10px}
+.head h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.02em}
+.head .sub{font-size:13px;color:var(--ink2);font-weight:500}
+.head .sp{flex:1}
+.pill{height:36px;padding:0 14px;border-radius:18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pill.ink{background:var(--ink);color:var(--on-ink)}
+.pill.line{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.pill .bd{width:7px;height:7px;border-radius:4px;background:var(--signal)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border-radius:18px;padding:14px;box-shadow:inset 0 0 0 1px var(--line)}
+.h2{font-size:13px;font-weight:700;color:var(--ink2);margin:14px 4px 2px}
+.muted{color:var(--ink3)}
+.empty{padding:22px 16px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.empty b{font-size:16px}
+.empty p{margin:0;color:var(--ink2);font-size:14px}
+/* journey */
+.journey{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px}
+.journey span{height:6px;border-radius:3px;background:var(--line)}
+.journey span.done{background:var(--ink)}
+.journey span.now{background:var(--signal)}
+.now-name{font-size:21px;font-weight:700;margin-top:10px}
+.now-sub{font-size:13px;color:var(--ink2)}
+/* lines */
+.line-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0}
+.line-row+.line-row{border-top:1px solid var(--line)}
+.line-row.fresh{border-radius:12px;padding-left:8px;padding-right:8px;margin:0 -8px}
+.t{width:46px;flex:none;font-weight:700;font-size:15px}
+.ln{flex:1;min-width:0}
+.ln b{display:block;font-size:15px}
+.ln small{display:block;color:var(--ink2);font-size:13px}
+.k{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:1px}
+.chk{height:32px;padding:0 12px;border-radius:16px;font-size:13px;font-weight:700;box-shadow:inset 0 0 0 1.5px var(--line);flex:none}
+.chk.on{background:var(--ink);color:var(--on-ink);box-shadow:none}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:10px;font-size:11px;font-weight:700;background:var(--sunk);color:var(--ink2);white-space:nowrap}
+.tag.sig{background:var(--signal-soft);color:var(--signal)}
+.next{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.next .card{flex:none;width:150px;padding:12px}
+.next .d{font-size:12px;font-weight:700;color:var(--ink2)}
+.next b{display:block;font-size:15px;margin-top:2px}
+.openrow{padding:12px 14px;border-radius:14px;color:var(--ink);font-weight:600;font-size:14px;box-shadow:inset 0 0 0 1px rgba(31,91,255,.35)}
+/* calendar */
+.calbar{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
+.calbar .wl{height:36px;padding:0 8px;border-radius:12px;font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px}
+.icon-btn{width:36px;height:36px;border-radius:18px;display:grid;place-items:center}
+.icon-btn svg{width:15px;height:15px}
+.day{display:flex;gap:12px;padding:10px 12px;border-radius:16px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;text-align:left;width:100%;position:relative}
+.day.today{box-shadow:inset 0 0 0 2px var(--ink)}
+.day.sel:not(.today){box-shadow:inset 0 0 0 2px var(--signal)}
+.day.past:not(.sel){opacity:.62}
+.dcol{width:34px;flex:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+.dcol .w{font-size:11px;font-weight:700;color:var(--ink3)}
+.dcol .n{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;font-size:15px;font-weight:700}
+.day.today .n{background:var(--ink);color:var(--on-ink)}
+.chips{flex:1;min-width:0;min-height:44px;display:flex;flex-wrap:wrap;align-content:center;gap:6px}
+.chip{height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap;background:var(--sunk)}
+.chip.visit{background:var(--ink);color:var(--on-ink)}
+.chip.proc{background:var(--signal);color:#fff}
+.chip.call{box-shadow:inset 0 0 0 1.5px var(--ink);background:transparent}
+.chip.done{background:var(--sunk);color:var(--ink3)}
+.daybody{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding-top:2px}
+.memo-ic{position:absolute;top:10px;right:12px;color:var(--ink3)}
+.memo-ic svg{width:13px;height:13px}
+.memoline{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:12px;background:var(--sunk);font-size:13px;color:var(--ink2);text-align:left;width:100%}
+.memoline svg{width:14px;height:14px;flex:none;margin-top:2px}
+.memoline .who{font-weight:700;color:var(--ink)}
+.addmemo{align-self:flex-start;height:30px;padding:0 10px;border-radius:15px;font-size:12px;font-weight:700;color:var(--ink2);display:inline-flex;align-items:center;gap:5px}
+.addmemo svg{width:13px;height:13px}
+.memo-ed{display:flex;flex-direction:column;gap:8px}
+.memo-ed textarea{width:100%;min-height:64px;resize:vertical;border:0;border-radius:12px;background:var(--sunk);padding:10px 12px;font-size:14px}
+.row{display:flex;align-items:center;gap:8px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink2)}
+.toggle i{width:38px;height:22px;border-radius:11px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.toggle i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:8px;background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle[aria-checked="true"] i{background:var(--signal)}
+.toggle[aria-checked="true"] i::after{transform:translateX(16px)}
+.btn{height:36px;padding:0 14px;border-radius:18px;font-size:13px;font-weight:700}
+.btn.ink{background:var(--ink);color:var(--on-ink)}
+.btn.line{box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.ghost{color:var(--ink2)}
+.btn.danger{color:var(--coral)}
+.native{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:14px;font-size:13px;color:var(--ink2);transition:opacity .5s}
+.native .sp{width:34px;flex:none;font-size:10px;font-weight:700;color:var(--ink3);text-align:center}
+.native a{color:inherit;text-decoration:none;flex:1;min-width:0;display:flex;flex-direction:column}
+.native a b{color:var(--ink);font-weight:600;font-size:13px}
+.native .x{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:var(--ink3);flex:none}
+.native .x svg{width:12px;height:12px}
+.fade{opacity:0}
+.fresh{animation:fresh 2.4s ease-out}
+@keyframes fresh{0%{box-shadow:inset 0 0 0 2px var(--signal),0 0 0 6px var(--signal-soft)}100%{}}
+/* month */
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:2px;padding:10px 6px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);text-align:center}
+.month .h{font-size:11px;font-weight:700;color:var(--ink3);padding-bottom:6px}
+.month button{min-height:54px;padding:4px 2px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.month .mn{width:26px;height:26px;border-radius:13px;display:grid;place-items:center;font-size:13px;font-weight:700}
+.month .mt .mn{background:var(--ink);color:var(--on-ink)}
+.month .bar{width:70%;height:5px;border-radius:3px;background:var(--ink)}
+.month .bar.proc{background:var(--signal)}
+.month .bar.dose{background:var(--line)}
+.month .off{opacity:.3}
+/* capture */
+.overlay{position:absolute;inset:0;z-index:30;background:var(--bg);overflow-y:auto}
+@media (max-width:879px){.overlay{position:fixed}}
+.ov-in{padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px;max-width:520px;margin:0 auto}
+.ov-head{display:flex;align-items:center;gap:8px}
+.ov-head h2{margin:0;font-size:20px;flex:1}
+textarea.memo-in{width:100%;min-height:180px;border:0;border-radius:16px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);padding:14px;font-size:15px;line-height:1.6;resize:vertical}
+.cand{display:flex;flex-direction:column;gap:8px}
+.cand .src{font-size:13px;color:var(--ink2)}
+.kinds{display:flex;flex-wrap:wrap;gap:6px}
+.kinds button{height:30px;padding:0 10px;border-radius:15px;font-size:12px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink2)}
+.kinds button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);box-shadow:none}
+.fields{display:flex;flex-wrap:wrap;gap:6px}
+.fields input{height:36px;border:0;border-radius:10px;background:var(--sunk);padding:0 10px;font-size:14px;min-width:0}
+.fields input.title{flex:1 1 160px}
+.warn{font-size:12px;color:var(--coral);font-weight:600}
+.notice{padding:10px 12px;border-radius:12px;background:var(--sunk);font-size:13px;color:var(--ink2)}
+/* community */
+.topics{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px}
+.topics button{height:34px;padding:0 14px;border-radius:17px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:inset 0 0 0 1px var(--line);background:var(--surface);color:var(--ink2)}
+.topics button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);box-shadow:none}
+.post{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.post .who{display:flex;align-items:center;gap:8px;font-size:13px}
+.av{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--sunk);color:var(--ink2);flex:none}
+.post .meta{color:var(--ink3);font-size:12px}
+.post p{margin:0;font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.post .acts{display:flex;gap:14px;font-size:13px;color:var(--ink2)}
+.post .acts button{display:inline-flex;align-items:center;gap:5px}
+.post .acts svg{width:16px;height:16px}
+.post.ad p{font-size:14px;color:var(--ink2)}
+.compose{display:flex;flex-direction:column;gap:8px}
+.compose textarea{width:100%;min-height:72px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);padding:12px;font-size:15px;resize:vertical}
+.share-panel{display:flex;flex-direction:column;gap:12px}
+.share-panel label{font-size:12px;font-weight:700;color:var(--ink2)}
+.share-panel input[type=text]{width:100%;height:40px;border:0;border-radius:12px;background:var(--sunk);padding:0 12px;font-size:15px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gate{display:flex;flex-direction:column;gap:12px}
+.gate h2{margin:0;font-size:20px}
+.gate ul{margin:0;padding-left:18px;color:var(--ink2);font-size:14px;display:flex;flex-direction:column;gap:6px}
+.status{font-size:12px;color:var(--ink3);padding:6px 4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="switch" id="switch"></div>
+<div class="panes">
+  <section class="pane" id="pane-patient" aria-label="환자 화면"><span class="pane-label">환자</span><div id="patient"></div></section>
+  <section class="pane readonly" id="pane-partner" aria-label="배우자 화면"><span class="pane-label">배우자 · 보기 전용</span><div id="partner"></div></section>
+</div>
+
+<script>
+'use strict';
+/* ---------- dates ---------- */
+const pad = (n) => String(n).padStart(2, '0');
+const ymd = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parseYmd = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const mondayOf = (d) => { const x = new Date(d); const k = (x.getDay() + 6) % 7; x.setDate(x.getDate() - k); x.setHours(0, 0, 0, 0); return x; };
+const mdLabel = (s) => { const d = parseYmd(s); return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + DOW[d.getDay()]; };
+const hm = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* ---------- domain: kinds, milestones ---------- */
+const KINDS = [
+  ['visit', '진료·검사'], ['dose', '투약'], ['trigger', '트리거'], ['retrieval', '채취'],
+  ['transfer', '이식'], ['test', '판정'], ['call', '연구실 연락'], ['open', '아직 미정'], ['skip', '저장 안 함']
+];
+const KLABEL = Object.fromEntries(KINDS);
+const MILESTONES = ['주기 시작', '과배란 주사', '트리거', '채취', '수정 · 배양', '이식', '판정'];
+const MS_OF = { dose: 1, trigger: 2, retrieval: 3, call: 4, transfer: 5, test: 6 };
+const CHIP_CLASS = { visit: 'visit', trigger: 'proc', retrieval: 'proc', transfer: 'proc', test: 'visit', call: 'call', dose: '' };
+
+/* ---------- parser: clinic text -> candidates (pure, deterministic) ---------- */
+function guessKind(s) {
+  if (/^\s*\[[^\]]*\]|진료\s*뒤\s*계획|안내\s*드립니다$|^안녕/.test(s)) return 'skip';
+  if (/미정|정해지|추후|안내\s*예정|결과\s*(보고|를\s*보고)|나중에/.test(s)) return 'open';
+  if (/트리거|hcg|오비드렐|난포\s*터/i.test(s)) return 'trigger';
+  if (/채취/.test(s)) return 'retrieval';
+  if (/이식/.test(s)) return 'transfer';
+  if (/판정|임신\s*검사|베타/.test(s)) return 'test';
+  if (/연구실|배아|수정\s*확인|배양/.test(s)) return 'call';
+  if (/주사|iu|펜|용량|투약|복용|약\b/i.test(s)) return 'dose';
+  if (/초음파|피검사|내원|진료|방문|검사|예약/.test(s)) return 'visit';
+  return 'skip';
+}
+function findDate(s, base) {
+  let m = s.match(/(\d{1,2})\s*[\/.월]\s*(\d{1,2})\s*일?/);
+  if (m) {
+    const mo = +m[1], da = +m[2];
+    if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) {
+      let d = new Date(base.getFullYear(), mo - 1, da);
+      if (d < addDays(base, -60)) d = new Date(base.getFullYear() + 1, mo - 1, da);
+      return ymd(d);
+    }
+  }
+  m = s.match(/(?:^|[^\d\/.])(\d{1,2})\s*일(?![가-힣]*간)/);
+  if (m && +m[1] >= 1 && +m[1] <= 31) { let d = new Date(base.getFullYear(), base.getMonth(), +m[1]); if (d < addDays(base, -7)) d = new Date(base.getFullYear(), base.getMonth() + 1, +m[1]); return ymd(d); }
+  if (/오늘/.test(s)) return ymd(base);
+  if (/내일/.test(s)) return ymd(addDays(base, 1));
+  if (/모레/.test(s)) return ymd(addDays(base, 2));
+  m = s.match(/(월|화|수|목|금|토|일)요일/);
+  if (m) { const want = DOW.indexOf(m[1]); let k = (want - base.getDay() + 7) % 7; if (k === 0) k = 7; return ymd(addDays(base, k)); }
+  return '';
+}
+function findTime(s) {
+  let m = s.match(/(\d{1,2}):(\d{2})/);
+  if (m && +m[1] < 24 && +m[2] < 60) return pad(+m[1]) + ':' + m[2];
+  m = s.match(/(오전|오후|밤|저녁|아침)?\s*(\d{1,2})\s*시\s*(?:(\d{1,2})\s*분|반)?/);
+  if (m && !/부터\s*금식/.test(s.slice(m.index, m.index + 10))) {
+    let h = +m[2]; const mi = m[3] ? +m[3] : (/반/.test(m[0]) ? 30 : 0);
+    if ((m[1] === '오후' || m[1] === '밤' || m[1] === '저녁') && h < 12) h += 12;
+    if (h < 24) return pad(h) + ':' + pad(mi);
+  }
+  return '';
+}
+function findTo(s, base) {
+  const m = s.match(/~\s*(\d{1,2})\s*[\/.]\s*(\d{1,2})|(\d{1,2})\s*[\/.]\s*(\d{1,2})\s*(?:일)?\s*까지/);
+  if (!m) return '';
+  const mo = +(m[1] || m[3]), da = +(m[2] || m[4]);
+  let d = new Date(base.getFullYear(), mo - 1, da); if (d < addDays(base, -60)) d = new Date(base.getFullYear() + 1, mo - 1, da);
+  return ymd(d);
+}
+function stripMeta(s) {
+  return s.replace(/^[^:：\d]{1,10}[:：]\s*/, '')
+    .replace(/\(\s*(월|화|수|목|금|토|일)\s*\)/g, ' ')
+    .replace(/(\d{1,2})\s*[\/.월]\s*(\d{1,2})\s*일?/g, ' ').replace(/(\d{1,2})\s*일(?=\D|$)/g, ' ').replace(/~\s*/g, ' ').replace(/까지/g, ' ')
+    .replace(/(오전|오후|밤|저녁|아침)?\s*\d{1,2}:\d{2}/g, ' ').replace(/(오늘|내일|모레)/g, ' ')
+    .replace(/매일\s*(밤|저녁|아침)?/g, ' ').replace(/(오전|오후|밤|저녁|아침)?\s*\d{1,2}\s*시(\s*\d{1,2}\s*분|반)?(?!\s*부터)/g, ' ')
+    .replace(/\s*[·,\-—]\s*(?=[·,\-—]|$)/g, ' ').replace(/^[\s·,\-—]+|[\s·,\-—]+$/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+function parseClinicText(text, base) {
+  return text.split(/\n+/).map((s) => s.replace(/^[\s\-•*·\d.)]+(?=\D)/, '').trim()).filter((s) => s.length > 1).map((line, i) => {
+    const kind = guessKind(line), rest = stripMeta(line);
+    const daily = kind === 'dose' && /매일|매일\s*밤|하루\s*\d\s*회|매일\s*같은/.test(line);
+    const defTitle = { visit: rest || '진료', dose: '주사', trigger: '트리거 주사', retrieval: '채취', transfer: '이식', test: '판정 검사', call: '연구실 연락', open: rest || line, skip: line }[kind];
+    const detail = kind === 'visit' || kind === 'open' || kind === 'skip' ? '' : rest.replace(/^(주사|트리거|채취|이식|판정)\s*/, '').replace(/^[\s·,\-—]+/, '');
+    const end = kind === 'dose' && /끝|중단|그만/.test(line);
+    const date = findDate(line, base) || (daily || end ? ymd(base) : '');
+    if (end) return { id: 'c' + i, line, kind, date, to: '', time: '', daily: false, end: true, title: '주사 끝', detail: '' };
+    return { id: 'c' + i, line, kind, date, to: daily ? findTo(line, base) : '', time: findTime(line), daily, title: defTitle, detail };
+  });
+}
+
+/* ---------- state ---------- */
+const S = { ready: false, offline: false, settings: {}, items: [], rules: [], open: [], memos: {}, doses: {}, posts: [] };
+const U = {
+  view: 'patient', tab: 'today', wk: 0, sel: null, month: false, edit: false,
+  memo: null, capture: null, share: false, topic: 'all', compose: '', partnerDot: false,
+  adTick: 0, fresh: new Set(), seenSent: new Set()
+};
+let db = null;
+const memStore = {};
+const ADS_HIDDEN_KEY = 'fevio.adsHidden';
+let adsHidden = {};
+try { adsHidden = JSON.parse(localStorage.getItem(ADS_HIDDEN_KEY) || '{}'); } catch (e) { adsHidden = {}; }
+
+const st = () => Object.assign({ shareSchedule: true, shareDoses: false, me: '', partner: '', nick: '', ads: true, accepted: false }, S.settings);
+const meName = () => st().me || '환자';
+const ptName = () => st().partner || '배우자';
+
+async function put(path, data, merge) {
+  if (db) { try { await (merge ? db.doc(path).update(data) : db.doc(path).set(data)); } catch (e) { if (merge) { try { await db.doc(path).set(data); } catch (e2) { flashStatus(e2); } } else flashStatus(e); } return; }
+  const [c, id] = path.split('/'); memStore[c] = memStore[c] || {}; memStore[c][id] = merge ? Object.assign({}, memStore[c][id] || {}, data) : data; applyMem();
+}
+async function del(path) {
+  if (db) { try { await db.doc(path).delete(); } catch (e) { flashStatus(e); } return; }
+  const [c, id] = path.split('/'); if (memStore[c]) delete memStore[c][id]; applyMem();
+}
+function flashStatus(e) { const msg = e && e.code === 'quota_exceeded' ? '저장 공간이 가득 찼어요. 지난 기록을 지워 주세요.' : '저장하지 못했어요. 잠시 뒤 다시 해 주세요.'; U.status = msg; render(); setTimeout(() => { U.status = ''; render(); }, 3200); }
+function setColl(name, docs) {
+  const now = Date.now();
+  if (name === 'settings') S.settings = (docs.find((d) => d.id === 'main') || {}).data || {};
+  else if (name === 'memos' || name === 'doses') { const o = {}; docs.forEach((d) => { o[d.id] = d.data; }); S[name] = o; }
+  else S[name] = docs.map((d) => Object.assign({ id: d.id }, d.data));
+  // mark partner-visible changes made in the last few seconds
+  docs.forEach((d) => { const t = d.data.updatedAt || d.data.createdAt; if (t && now - t < 5000) U.fresh.add(name + ':' + d.id); });
+  if (U.view === 'patient' && !wide()) U.partnerDot = U.partnerDot || docs.some((d) => now - (d.data.updatedAt || d.data.createdAt || 0) < 5000);
+  setTimeout(() => { U.fresh.clear(); }, 2600);
+}
+function applyMem() { ['settings', 'items', 'rules', 'open', 'memos', 'doses', 'posts'].forEach((c) => setColl(c, Object.entries(memStore[c] || {}).map(([id, data]) => ({ id, data })))); render(); }
+const wide = () => window.matchMedia('(min-width: 880px)').matches;
+
+/* ---------- derived ---------- */
+function rulesOn(day) {
+  // newest dose rule that covers this day wins; a later plan supersedes an earlier one
+  const covering = S.rules.filter((r) => r.from <= day && (!r.to || r.to >= day)).sort((a, b) => (b.from + b.createdAt).localeCompare(a.from + a.createdAt));
+  return covering.length ? [covering[0]] : [];
+}
+function eventsOn(day) {
+  const ev = S.items.filter((x) => x.date === day).map((x) => ({ src: 'item', id: x.id, kind: x.kind, time: x.time || '', title: x.title, detail: x.detail || '', upd: x.createdAt }));
+  rulesOn(day).forEach((r) => ev.push({ src: 'rule', id: r.id, kind: 'dose', time: r.time || '', title: r.title || '주사', detail: r.detail || '', upd: r.createdAt }));
+  return ev.sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
+}
+function currentMilestone() {
+  const t = ymd(today());
+  if (!S.items.length && !S.rules.length) return null;
+  let m = 0;
+  S.items.forEach((x) => { if (x.date <= t && MS_OF[x.kind] > m) m = MS_OF[x.kind]; });
+  S.rules.forEach((r) => { if (r.from <= t && m < 1) m = 1; });
+  return m;
+}
+function upcoming(n) {
+  const t = ymd(today()), out = [];
+  for (let i = 1; i <= 45 && out.length < n; i++) {
+    const day = ymd(addDays(today(), i));
+    eventsOn(day).filter((e) => e.kind !== 'dose').forEach((e) => { if (out.length < n) out.push(Object.assign({ day }, e)); });
+  }
+  return out.filter((e) => e.day > t);
+}
+const isPastEvent = (day, time) => { const t = ymd(today()); if (day < t) return true; if (day > t || !time) return false; const now = new Date(); return time < pad(now.getHours()) + ':' + pad(now.getMinutes()); };
+const doseKey = (day, ruleId) => day + '_' + ruleId;
+
+/* ---------- ads (embedded examples; patient view only) ---------- */
+const CAL_ADS = [
+  { id: 'cal-cool-a', ctx: 'dose', brand: '포켓쿨', t: '주사 펜 들고 나가는 날', s: '휴대용 보냉 파우치' },
+  { id: 'cal-cool-b', ctx: 'dose', brand: '포켓쿨', t: '냉장 보관 약 챙길 때', s: '보냉 파우치 2개 묶음' },
+  { id: 'cal-taxi-a', ctx: 'proc', brand: '새벽콜', t: '시술 날 아침 이동', s: '병원 앞까지 택시 미리 예약' },
+  { id: 'cal-taxi-b', ctx: 'proc', brand: '새벽콜', t: '보호자와 함께 귀가', s: '귀가 택시 예약해 두기' },
+  { id: 'cal-park-a', ctx: 'visit', brand: '파킹온', t: '병원 가는 날 주차', s: '근처 주차장 미리 결제' },
+  { id: 'cal-half-a', ctx: 'visit', brand: '하프데이', t: '반차 쓰는 날이 많을 때', s: '팀 일정 공유 캘린더' }
+];
+const FEED_ADS = [
+  { id: 'feed-half', topic: ['work', 'all'], brand: '하프데이', t: '병원 가는 날 반차, 팀에는 "개인 일정"으로만 보이게', cta: '팀 캘린더 써 보기' },
+  { id: 'feed-lunch', topic: ['work', 'all'], brand: '한끼정기', t: '야근 많은 주, 저녁 도시락 정기배송 첫 주 할인', cta: '메뉴 보기' },
+  { id: 'feed-couple', topic: ['partner', 'all'], brand: '우리달력', t: '둘이 같이 보는 생활 일정, 장보기 목록까지 한 곳에', cta: '같이 쓰기' },
+  { id: 'feed-wear', topic: ['all'], brand: '원마일', t: '병원 오가는 날 입기 편한 니트 세트', cta: '보러 가기' }
+];
+const adAllowed = () => st().ads && currentMilestone() !== 6;
+function pickCalAd(days) {
+  if (!adAllowed()) return null;
+  const has = { dose: false, proc: false, visit: false, test: false };
+  days.forEach((d) => d.ev.forEach((e) => { if (e.kind === 'dose') has.dose = true; if (['trigger', 'retrieval', 'transfer'].includes(e.kind)) has.proc = true; if (e.kind === 'visit') has.visit = true; if (e.kind === 'test') has.test = true; }));
+  if (has.test) return null;
+  const ctx = has.proc ? 'proc' : has.dose ? 'dose' : has.visit ? 'visit' : null;
+  if (!ctx) return null;
+  const pool = CAL_ADS.filter((a) => a.ctx === ctx && !adsHidden[a.id]);
+  if (!pool.length) return null;
+  const ad = pool[(U.adTick + U.wk + 7) % pool.length];
+  const anchor = days.findIndex((d) => d.ev.some((e) => (ctx === 'proc' ? ['trigger', 'retrieval', 'transfer'].includes(e.kind) : e.kind === ctx)));
+  return { ad, after: anchor };
+}
+function hideAd(id) { adsHidden[id] = Date.now(); try { localStorage.setItem(ADS_HIDDEN_KEY, JSON.stringify(adsHidden)); } catch (e) {} render(); }
+
+/* ---------- icons ---------- */
+const I = {
+  today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16v14H4zM4 10h16M8 3.5v4M16 3.5v4"/></svg>',
+  people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6M15.5 6.2a3 3 0 010 5.8M17.5 14.6c1.6.6 2.6 2 3 4.4"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 11h12v9H6zM9 11V8a3 3 0 016 0v3"/></svg>'
+};
+
+/* ---------- render: shared pieces ---------- */
+function tabbar(role) {
+  const tabs = [['today', '오늘', I.today], ['plan', '일정', I.cal], ['together', '함께', I.people]];
+  return '<nav class="tabbar" aria-label="' + (role === 'patient' ? '환자' : '배우자') + ' 탭"><div class="tabs">' + tabs.map((t) =>
+    '<button ' + (role === 'patient' ? 'data-act="tab" data-v="' + t[0] + '"' : 'tabindex="-1" aria-disabled="true"') + (U.tab === t[0] ? ' aria-current="page"' : '') + '>' + t[2] + t[1] + '</button>').join('') + '</div></nav>';
+}
+function head(role) {
+  const title = { today: '오늘', plan: '일정', together: '함께' }[U.tab];
+  const sub = U.tab === 'today' ? mdLabel(ymd(today())) : '';
+  let right = '';
+  if (role === 'patient' && st().accepted) {
+    if (U.tab !== 'together') right += '<button class="pill ink" data-act="capture"><span class="bd"></span>' + (U.tab === 'plan' ? '일정 넣기' : '병원 안내 넣기') + '</button>';
+    right += '<button class="pill line" data-act="share" aria-expanded="' + U.share + '">공유</button>';
+  }
+  if (role === 'partner') right = '<span class="tag">' + esc(meName()) + '님이 공유한 것</span>';
+  return '<header class="head"><h1>' + title + '</h1><span class="sub num">' + sub + '</span><span class="sp"></span>' + right + '</header>';
+}
+function journeyBlock(role) {
+  const m = currentMilestone();
+  if (m == null) return '';
+  return '<div class="card"><div class="journey" aria-hidden="true">' + MILESTONES.map((_, i) => '<span class="' + (i < m ? 'done' : i === m ? 'now' : '') + '"></span>').join('') + '</div>' +
+    '<div class="now-name">' + MILESTONES[m] + '</div><div class="now-sub num">' + (m + 1) + ' / 7 단계' + (m < 6 ? ' · 다음 ' + MILESTONES[m + 1] : '') + '</div></div>';
+}
+function evLine(e, day, role) {
+  const past = isPastEvent(day, e.time);
+  const showDose = role === 'patient' || st().shareDoses;
+  if (e.kind === 'dose' && !showDose) return '';
+  const dk = doseKey(day, e.id), done = e.kind === 'dose' && S.doses[dk];
+  let tail = '';
+  if (e.kind === 'dose' && role === 'patient' && day === ymd(today())) tail = '<button class="chk' + (done ? ' on' : '') + '" data-act="dose" data-k="' + dk + '">' + (done ? '맞음 ' + hm(done.at) : '맞았어요') + '</button>';
+  else if (e.kind === 'dose' && done) tail = '<span class="tag sig">맞음 ' + hm(done.at) + '</span>';
+  const kc = e.kind === 'dose' ? 'var(--line)' : (['trigger', 'retrieval', 'transfer'].includes(e.kind) ? 'var(--signal)' : 'var(--ink)');
+  const fresh = U.fresh.has((e.src === 'rule' ? 'rules:' : 'items:') + e.id) || (done && U.fresh.has('doses:' + dk)) ? ' fresh' : '';
+  return '<div class="line-row' + fresh + '" style="' + (past && !done ? 'opacity:.6' : '') + '"><span class="t num">' + (e.time || '—') + '</span><span class="ln"><b><i class="k" style="background:' + kc + '"></i>' + esc(e.title) + '</b>' + (e.detail ? '<small class="num">' + esc(e.detail) + '</small>' : '') + '</span>' + tail + '</div>';
+}
+
+/* ---------- 오늘 ---------- */
+function viewToday(role) {
+  const s = st();
+  if (role === 'partner' && !s.shareSchedule) return '<div class="empty"><b>아직 공유된 일정이 없어요</b><p>' + esc(meName()) + '님이 공유를 켜면 여기에 보여요.</p></div>';
+  const m = currentMilestone();
+  if (m == null) {
+    if (role === 'partner') return '<div class="empty"><b>아직 공유된 일정이 없어요</b><p>' + esc(meName()) + '님이 병원 안내를 넣으면 여기에 같이 보여요.</p></div>';
+    return '<div class="empty"><b>병원에서 받은 안내를 넣어 주세요</b><p>문자나 메모를 그대로 붙여 넣으면 날짜·시간별로 나눠 드려요. 나눈 내용은 확인한 것만 저장돼요.</p><button class="btn ink" data-act="capture">병원 안내 넣기</button></div>';
+  }
+  const t = ymd(today());
+  const evs = eventsOn(t).map((e) => evLine(e, t, role)).join('');
+  const up = upcoming(4);
+  const opens = S.open.filter((o) => !o.done);
+  let h = journeyBlock(role);
+  h += '<div class="h2">오늘</div><div class="card">' + (evs || '<div class="muted" style="padding:6px 0">오늘은 병원 일정이 없어요</div>') + '</div>';
+  if (up.length) h += '<div class="h2">다음</div><div class="next">' + up.map((e) => '<div class="card' + (U.fresh.has('items:' + e.id) ? ' fresh' : '') + '"><div class="d num">' + mdLabel(e.day) + (e.time ? ' ' + e.time : '') + '</div><b>' + esc(e.title) + '</b>' + (e.detail ? '<div class="muted num" style="font-size:12px">' + esc(e.detail) + '</div>' : '') + '</div>').join('') + '</div>';
+  if (opens.length) h += '<div class="h2">아직 안 정해짐</div><div class="stack">' + opens.map((o) => '<div class="openrow hatch' + (U.fresh.has('open:' + o.id) ? ' fresh' : '') + '">' + esc(o.title) + '</div>').join('') + '</div>';
+  return h;
+}
+
+/* ---------- 일정 ---------- */
+function weekDays() {
+  const mon = addDays(mondayOf(today()), U.wk * 7), t = ymd(today());
+  return Array.from({ length: 7 }, (_, i) => { const d = addDays(mon, i), day = ymd(d); return { day, d, dow: DOW[d.getDay()], n: d.getDate(), isToday: day === t, past: day < t, ev: eventsOn(day) }; });
+}
+function memoBlock(day, role) {
+  const mm = S.memos[day];
+  if (role === 'partner') {
+    if (!mm || !mm.shared || !mm.text) return '';
+    return '<div class="memoline' + (U.fresh.has('memos:' + day) ? ' fresh' : '') + '">' + I.pen + '<span><span class="who">' + esc(meName()) + '</span> ' + esc(mm.text) + '</span></div>';
+  }
+  if (U.memo && U.memo.day === day) {
+    return '<div class="memo-ed" data-stop="1"><label class="muted" for="memo-text" style="font-size:12px;font-weight:700">' + mdLabel(day) + ' 메모</label>' +
+      '<textarea id="memo-text" data-in="memo" placeholder="몸 상태, 할 일, 물어볼 것">' + esc(U.memo.text) + '</textarea>' +
+      '<div class="row"><button class="toggle" role="switch" aria-checked="' + U.memo.shared + '" data-act="memo-share"><i></i>' + esc(ptName()) + '에게 보이기</button><span class="sp" style="flex:1"></span>' +
+      (mm ? '<button class="btn danger" data-act="memo-del">지우기</button>' : '') + '<button class="btn ghost" data-act="memo-cancel">취소</button><button class="btn ink" data-act="memo-save">저장</button></div></div>';
+  }
+  if (!mm || !mm.text) return '<button class="addmemo" data-act="memo-open" data-day="' + day + '">' + I.pen + '메모</button>';
+  const receipt = mm.shared ? (mm.seenAt ? '<span class="tag sig">' + esc(ptName()) + ' 봄 ' + hm(mm.seenAt) + '</span>' : '<span class="tag">' + esc(ptName()) + '에게 보임</span>') : '<span class="tag">' + I.lock.replace('<svg', '<svg width="10" height="10"') + '&nbsp;나만</span>';
+  return '<button class="memoline' + (U.fresh.has('memos:' + day) ? ' fresh' : '') + '" data-act="memo-open" data-day="' + day + '">' + I.pen + '<span style="flex:1;min-width:0">' + esc(mm.text) + '</span>' + receipt + '</button>';
+}
+function viewPlan(role) {
+  const s = st();
+  if (role === 'partner' && !s.shareSchedule) return '<div class="empty"><b>아직 공유된 일정이 없어요</b></div>';
+  const days = weekDays(), mon = days[0].d, sun = days[6].d;
+  const label = U.month ? (mon.getFullYear() + '년 ' + (mon.getMonth() + 1) + '월') : ((mon.getMonth() + 1) + '월 ' + mon.getDate() + ' – ' + (sun.getMonth() !== mon.getMonth() ? (sun.getMonth() + 1) + '월 ' : '') + sun.getDate());
+  const ctl = role === 'patient';
+  let h = '<div class="calbar"><' + (ctl ? 'button data-act="month"' : 'span') + ' class="wl num" aria-expanded="' + U.month + '">' + label + '<span style="transform:rotate(' + (U.month ? 180 : 0) + 'deg);display:inline-flex">' + I.down + '</span></' + (ctl ? 'button' : 'span') + '><span style="flex:1"></span>' +
+    (ctl && U.wk !== 0 ? '<button class="btn line" data-act="wk0">이번 주</button>' : '') +
+    (ctl && !U.month ? '<button class="icon-btn" aria-label="지난 주" data-act="wk" data-v="-1">' + I.left + '</button><button class="icon-btn" aria-label="다음 주" data-act="wk" data-v="1">' + I.right + '</button>' : '') + '</div>';
+  if (U.month) return h + monthView(role);
+  const sel = U.sel || ymd(today());
+  const adPick = role === 'patient' ? pickCalAd(days) : null;
+  h += '<div class="stack">';
+  days.forEach((d, i) => {
+    const open = d.day === sel;
+    const visible = d.ev.filter((e) => role === 'patient' || e.kind !== 'dose' || s.shareDoses);
+    const mm = S.memos[d.day], hasMemo = mm && mm.text && (role === 'patient' || mm.shared);
+    const cls = 'day' + (d.isToday ? ' today' : '') + (open ? ' sel' : '') + (d.past ? ' past' : '');
+    h += '<div class="' + cls + '"' + (ctl ? ' data-act="day" data-day="' + d.day + '" role="button" tabindex="0" aria-expanded="' + open + '"' : '') + '>' +
+      '<span class="dcol"><span class="w">' + d.dow + '</span><span class="n num">' + d.n + '</span></span>';
+    if (!open) {
+      h += '<span class="chips">' + visible.map((e) => { const p = isPastEvent(d.day, e.time); return '<span class="chip num ' + (p ? 'done' : (CHIP_CLASS[e.kind] || '')) + '">' + (e.time ? '<b>' + e.time + '</b>' : '') + esc(e.title) + '</span>'; }).join('') + '</span>';
+      if (hasMemo) h += '<span class="memo-ic" aria-label="메모 있음">' + I.pen + '</span>';
+    } else {
+      h += '<span class="daybody">' + (visible.length ? visible.map((e) => evLine(e, d.day, role) + (role === 'patient' && U.edit && e.src === 'item' ? '' : '')).join('') : '<span class="muted" style="font-size:13px;padding:10px 0">일정 없음</span>') +
+        memoBlock(d.day, role) +
+        (role === 'patient' && visible.some((e) => e.src === 'item' || e.src === 'rule') ? (U.edit ? '<div class="row" data-stop="1" style="flex-wrap:wrap">' + visible.map((e) => '<button class="btn line" data-act="del-ev" data-src="' + e.src + '" data-id="' + e.id + '">' + esc(e.title) + ' 지우기</button>').join('') + '<button class="btn ghost" data-act="edit">끝</button></div>' : '<button class="addmemo" data-act="edit" style="margin-top:-4px">고치기</button>') : '') +
+        '</span>';
+    }
+    h += '</div>';
+    if (adPick && adPick.after === i) h += nativeCalAd(adPick.ad);
+  });
+  return h + '</div>';
+}
+function nativeCalAd(a) {
+  return '<div class="native" id="calad"><span class="sp">광고</span><a><b>' + esc(a.t) + '</b><span>' + esc(a.s) + ' · ' + esc(a.brand) + '</span></a><button class="x" aria-label="이 광고 숨기기" data-act="hide-ad" data-id="' + a.id + '">' + I.x + '</button></div>';
+}
+function monthView(role) {
+  const base = addDays(mondayOf(today()), U.wk * 7), first = new Date(base.getFullYear(), base.getMonth(), 1), start = mondayOf(first), t = ymd(today());
+  let h = '<div class="month">' + ['월', '화', '수', '목', '금', '토', '일'].map((x) => '<span class="h">' + x + '</span>').join('');
+  for (let i = 0; i < 42; i++) {
+    const d = addDays(start, i), day = ymd(d), inM = d.getMonth() === first.getMonth();
+    if (i >= 35 && !inM) break;
+    const ev = eventsOn(day).filter((e) => role === 'patient' || e.kind !== 'dose' || st().shareDoses);
+    const bars = ev.filter((e) => e.kind !== 'dose').slice(0, 2).map((e) => '<span class="bar ' + (['trigger', 'retrieval', 'transfer'].includes(e.kind) ? 'proc' : '') + '"></span>').join('') || (ev.length ? '<span class="bar dose"></span>' : '');
+    h += '<button class="' + (inM ? '' : 'off') + (day === t ? ' mt' : '') + '"' + (role === 'patient' ? ' data-act="mday" data-day="' + day + '"' : ' tabindex="-1"') + '><span class="mn num">' + d.getDate() + '</span>' + bars + '</button>';
+  }
+  return h + '</div>';
+}
+
+/* ---------- 함께 (community) ---------- */
+const TOPICS = [['all', '전체'], ['stage', '같은 단계'], ['work', '일과 병행'], ['partner', '배우자']];
+function viewTogether(role) {
+  const m = currentMilestone();
+  const stage = m == null ? '' : MILESTONES[m];
+  const posts = S.posts.filter((p) => U.topic === 'all' || p.topic === U.topic || (U.topic === 'stage' && p.stage === stage)).sort((a, b) => b.createdAt - a.createdAt);
+  let h = '<div class="topics" role="tablist">' + TOPICS.map((t) => '<button role="tab" aria-pressed="' + (U.topic === t[0]) + '"' + (role === 'patient' ? ' data-act="topic" data-v="' + t[0] + '"' : ' tabindex="-1"') + '>' + t[1] + '</button>').join('') + '</div>';
+  if (role === 'patient') h += '<div class="compose"><label for="compose" class="muted" style="font-size:12px;font-weight:700">' + esc(st().nick || '익명') + (stage ? ' · ' + stage : '') + '</label><textarea id="compose" data-in="compose" placeholder="지금 단계에서 겪는 일을 나눠 주세요. 병원 이름·이름·번호는 적지 않아요.">' + esc(U.compose) + '</textarea><div class="row"><span style="flex:1"></span><button class="btn ink" data-act="post"' + (U.compose.trim() ? '' : ' disabled style="opacity:.4"') + '>올리기</button></div></div>';
+  if (!posts.length) return h + '<div class="empty"><b>아직 글이 없어요</b><p>' + (role === 'patient' ? '첫 글을 남기면 같은 길을 걷는 분들이 볼 수 있어요.' : '올라온 글이 여기에 보여요.') + '</p></div>';
+  const ads = role === 'patient' && adAllowed() && U.topic !== 'stage' ? FEED_ADS.filter((a) => a.topic.includes(U.topic) && !adsHidden[a.id]) : [];
+  h += '<div class="stack">';
+  posts.forEach((p, i) => {
+    h += '<article class="post' + (U.fresh.has('posts:' + p.id) ? ' fresh' : '') + '"><div class="who"><span class="av">' + esc((p.nick || '익').slice(0, 1)) + '</span><b>' + esc(p.nick || '익명') + '</b><span class="meta">' + esc(p.stage || '') + ' · ' + relTime(p.createdAt) + '</span></div><p>' + esc(p.text) + '</p>' +
+      '<div class="acts"><button' + (role === 'patient' ? ' data-act="like" data-id="' + p.id + '"' : ' tabindex="-1"') + ' aria-label="공감">' + I.heart + '<span class="num">' + (p.likes || 0) + '</span></button></div></article>';
+    const slot = i === 1 ? 0 : (i > 1 && (i - 1) % 5 === 0 ? (i - 1) / 5 : -1);
+    if (slot >= 0 && ads.length) { const a = ads[(slot + U.adTick) % ads.length]; h += '<article class="post ad" id="feedad-' + slot + '"><div class="who"><span class="av">' + esc(a.brand.slice(0, 1)) + '</span><b>' + esc(a.brand) + '</b><span class="meta">광고</span><span style="flex:1"></span><button class="x" style="width:28px;height:28px;display:grid;place-items:center;color:var(--ink3)" aria-label="이 광고 숨기기" data-act="hide-ad" data-id="' + a.id + '">' + I.x.replace('<svg', '<svg width="12" height="12"') + '</button></div><p>' + esc(a.t) + '</p><div class="acts"><a style="color:var(--ink2);font-weight:600;font-size:13px">' + esc(a.cta) + '</a></div></article>'; }
+  });
+  return h + '</div>';
+}
+function relTime(ts) { const s = Math.max(0, (Date.now() - ts) / 1000); if (s < 60) return '방금'; if (s < 3600) return Math.floor(s / 60) + '분 전'; if (s < 86400) return Math.floor(s / 3600) + '시간 전'; return mdLabel(ymd(new Date(ts))); }
+
+/* ---------- 공유 panel, gate, capture ---------- */
+function sharePanel() {
+  const s = st();
+  const tg = (k, label) => '<button class="toggle" role="switch" aria-checked="' + !!s[k] + '" data-act="set" data-k="' + k + '"><i></i>' + label + '</button>';
+  return '<div class="card share-panel"><div class="grid2"><div><label for="s-me">내 이름</label><input id="s-me" type="text" data-set="me" value="' + esc(s.me) + '" placeholder="환자"></div><div><label for="s-pt">배우자 이름</label><input id="s-pt" type="text" data-set="partner" value="' + esc(s.partner) + '" placeholder="배우자"></div></div>' +
+    tg('shareSchedule', esc(ptName()) + '에게 일정 보이기') + tg('shareDoses', '투약 시각·용량도 보이기') +
+    '<div><label for="s-nick">커뮤니티 닉네임</label><input id="s-nick" type="text" data-set="nick" value="' + esc(s.nick) + '" placeholder="익명"></div>' + tg('ads', '일정에 맞는 생활 정보 보기') +
+    '<div class="row"><span style="flex:1"></span><button class="btn ink" data-act="share">닫기</button></div></div>';
+}
+function gate() {
+  return '<div class="card gate"><h2>시작하기 전에</h2><ul><li>Fevio는 병원이 알려 준 일정과 투약을 정리해 보여 줘요.</li><li>진단, 약 용량, 치료 방법은 판단하지 않아요. 병원이 정한 대로만 보여요.</li><li>몸이 불편하면 앱이 아니라 병원에 바로 연락해 주세요.</li><li>' + '배우자에게는 내가 켠 것만 보여요.</li></ul><button class="btn ink" style="height:46px" data-act="accept">동의하고 시작</button></div>';
+}
+function captureView() {
+  const c = U.capture;
+  let h = '<div class="overlay" role="dialog" aria-label="병원 안내 넣기"><div class="ov-in"><div class="ov-head"><h2>' + (c.cands ? '나눈 내용 확인' : '병원 안내 넣기') + '</h2><button class="btn ghost" data-act="cap-close">닫기</button></div>';
+  if (!c.cands) {
+    h += '<label for="cap-text" class="muted" style="font-size:13px">받은 문자나 메모를 그대로 붙여 넣어 주세요</label><textarea id="cap-text" class="memo-in" data-in="cap" placeholder="예) 다음 내원 11/23(월) 09:20 초음파·피검사&#10;주사 A 150 · B 75 매일 21:00&#10;채취일은 월 검사 뒤 안내">' + esc(c.text) + '</textarea>' +
+      '<button class="btn ink" style="height:48px" data-act="cap-split"' + (c.text.trim() ? '' : ' disabled style="height:48px;opacity:.4"') + '>나눠 보기</button>';
+  } else {
+    h += '<div class="notice">줄마다 종류를 맞게 골라 주세요. 확인한 것만 일정에 들어가요.</div>';
+    c.cands.forEach((x, i) => {
+      const needDate = !['open', 'skip'].includes(x.kind) && !x.date;
+      h += '<div class="card cand"><div class="src">' + esc(x.line) + '</div><div class="kinds">' + KINDS.map((k) => '<button aria-pressed="' + (x.kind === k[0]) + '" data-act="cand-kind" data-i="' + i + '" data-v="' + k[0] + '">' + k[1] + '</button>').join('') + '</div>';
+      if (x.kind !== 'skip') {
+        h += '<div class="fields"><input class="title" aria-label="이름" data-cand="title" data-i="' + i + '" value="' + esc(x.title) + '">';
+        if (x.kind !== 'open') h += '<input type="date" aria-label="날짜" data-cand="date" data-i="' + i + '" value="' + x.date + '"><input type="time" aria-label="시각" data-cand="time" data-i="' + i + '" value="' + x.time + '">';
+        if (x.kind === 'dose') h += '<input aria-label="용량" data-cand="detail" data-i="' + i + '" value="' + esc(x.detail) + '" placeholder="용량">';
+        h += '</div>';
+        if (x.kind === 'dose' && x.end) h += '<div class="notice num">' + (x.date ? mdLabel(x.date) : '이날') + '까지 맞고 매일 주사 일정을 끝내요</div>';
+        else if (x.kind === 'dose') h += '<button class="toggle" role="switch" aria-checked="' + x.daily + '" data-act="cand-daily" data-i="' + i + '"><i></i>매일 반복' + (x.daily ? '<span class="num" style="margin-left:6px">' + (x.to ? '~ ' + mdLabel(x.to) : '다음 안내까지') + '</span>' : '') + '</button>';
+        if (needDate) h += '<div class="warn">날짜를 넣어 주세요</div>';
+      }
+      h += '</div>';
+    });
+    const ok = c.cands.some((x) => x.kind !== 'skip') && !c.cands.some((x) => !['open', 'skip'].includes(x.kind) && !x.date);
+    h += '<button class="btn ink" style="height:48px' + (ok ? '' : ';opacity:.4') + '" data-act="cap-save"' + (ok ? '' : ' disabled') + '>확인하고 저장</button><button class="btn ghost" data-act="cap-back">다시 붙여 넣기</button>';
+  }
+  return h + '</div></div>';
+}
+
+/* ---------- render root ---------- */
+function paneHtml(role) {
+  let body = head(role);
+  if (U.status && role === 'patient') body += '<div class="status">' + esc(U.status) + '</div>';
+  if (!S.ready) body += '<div class="status">불러오는 중…</div>';
+  else if (role === 'patient' && !st().accepted) body += gate();
+  else {
+    if (role === 'patient' && U.share) body += sharePanel();
+    body += '<div class="stack">' + (U.tab === 'today' ? viewToday(role) : U.tab === 'plan' ? viewPlan(role) : viewTogether(role)) + '</div>';
+  }
+  if (role === 'patient' && S.offline) body += '<div class="status">이 보기에서는 저장되지 않아요. 새로고침하면 사라져요.</div>';
+  return '<div class="scroll">' + body + '</div>' + tabbar(role) + (role === 'patient' && U.capture ? captureView() : '');
+}
+let lastFocus = null;
+function render() {
+  const a = document.activeElement; lastFocus = a && a.id ? { id: a.id, s: a.selectionStart, e: a.selectionEnd } : null;
+  const keep = {}; document.querySelectorAll('.scroll').forEach((el, i) => { keep[i] = el.scrollTop; });
+  document.getElementById('switch').innerHTML = '<div class="seg" role="group" aria-label="보는 화면"><button aria-pressed="' + (U.view === 'patient') + '" data-act="view" data-v="patient">' + (st().me ? esc(st().me) + ' · 환자' : '환자') + '</button><button aria-pressed="' + (U.view === 'partner') + '" data-act="view" data-v="partner">' + (st().partner ? esc(st().partner) + ' · 배우자' : '배우자') + '에게 보이는 화면' + (U.partnerDot ? '<span class="dot"></span>' : '') + '</button></div>';
+  document.getElementById('patient').innerHTML = paneHtml('patient');
+  document.getElementById('partner').innerHTML = paneHtml('partner');
+  document.getElementById('pane-patient').hidden = U.view !== 'patient';
+  document.getElementById('pane-partner').hidden = U.view !== 'partner';
+  document.querySelectorAll('.scroll').forEach((el, i) => { if (keep[i] != null) el.scrollTop = keep[i]; });
+  if (lastFocus) { const el = document.getElementById(lastFocus.id); if (el) { el.focus(); try { if (lastFocus.s != null) el.setSelectionRange(lastFocus.s, lastFocus.e); } catch (e) {} } }
+  markSeen();
+}
+// A shared memo counts as seen once the partner's screen actually shows it.
+function markSeen() {
+  const partnerVisible = wide() || U.view === 'partner';
+  if (!partnerVisible || U.tab !== 'plan' || !st().shareSchedule) return;
+  weekDays().forEach((d) => {
+    const mm = S.memos[d.day];
+    if (mm && mm.shared && mm.text && !mm.seenAt && !U.seenSent.has(d.day + mm.updatedAt)) {
+      U.seenSent.add(d.day + mm.updatedAt);
+      setTimeout(() => put('memos/' + d.day, { seenAt: Date.now() }, true), 900);
+    }
+  });
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-act]'); if (!el) return;
+  if (el.closest('#pane-partner')) return;
+  const act = el.dataset.act;
+  const stopper = ev.target.closest('[data-stop]');
+  if (act === 'day' && stopper) return;
+  if (act !== 'day' && el.closest('[data-act="day"]') && act !== 'day') ev.stopPropagation();
+  handle(act, el);
+});
+document.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('[data-act="day"]')) { ev.preventDefault(); handle('day', ev.target); } });
+document.addEventListener('input', (ev) => {
+  const t = ev.target;
+  if (t.dataset.in === 'memo') U.memo.text = t.value;
+  else if (t.dataset.in === 'cap') { U.capture.text = t.value; const b = document.querySelector('[data-act="cap-split"]'); if (b) { b.disabled = !t.value.trim(); b.style.opacity = t.value.trim() ? '' : '.4'; } }
+  else if (t.dataset.in === 'compose') { U.compose = t.value; const b = document.querySelector('[data-act="post"]'); if (b) { b.disabled = !t.value.trim(); b.style.opacity = t.value.trim() ? '' : '.4'; } }
+  else if (t.dataset.cand) { const x = U.capture.cands[+t.dataset.i]; x[t.dataset.cand] = t.value; if (t.dataset.cand === 'date') render(); }
+});
+document.addEventListener('change', (ev) => { const t = ev.target; if (t.dataset.set) put('settings/main', { [t.dataset.set]: t.value.trim().slice(0, 20), updatedAt: Date.now() }, true); });
+let wasWide = wide();
+window.addEventListener('resize', () => { if (wide() !== wasWide) { wasWide = wide(); render(); } });
+
+function handle(act, el) {
+  const v = el.dataset.v;
+  switch (act) {
+    case 'view': U.view = v; if (v === 'partner') U.partnerDot = false; render(); window.scrollTo(0, 0); break;
+    case 'tab': U.tab = v; U.share = false; U.memo = null; U.edit = false; U.adTick++; render(); break;
+    case 'share': U.share = !U.share; render(); break;
+    case 'set': put('settings/main', { [el.dataset.k]: !st()[el.dataset.k], updatedAt: Date.now() }, true); break;
+    case 'accept': put('settings/main', Object.assign({}, S.settings, { accepted: true, acceptedAt: Date.now(), shareSchedule: true, shareDoses: false, ads: true, updatedAt: Date.now() })); break;
+    case 'capture': U.capture = { text: '', cands: null }; render(); setTimeout(() => { const t = document.getElementById('cap-text'); if (t) t.focus(); }, 30); break;
+    case 'cap-close': U.capture = null; render(); break;
+    case 'cap-back': U.capture.cands = null; render(); break;
+    case 'cap-split': {
+      const text = U.capture.text.trim(); if (!text) return;
+      const id = 'cap' + Date.now().toString(36);
+      U.capture.id = id; U.capture.cands = parseClinicText(text, today());
+      put('captures/' + id, { text, status: 'draft', createdAt: Date.now() });  // raw input saved before any classification
+      render(); break;
+    }
+    case 'cand-kind': { const x = U.capture.cands[+el.dataset.i]; x.kind = v; if (v === 'dose' && !x.title) x.title = '주사'; render(); break; }
+    case 'cand-daily': { const x = U.capture.cands[+el.dataset.i]; x.daily = !x.daily; render(); break; }
+    case 'cap-save': saveCapture(); break;
+    case 'day': if (U.sel !== el.dataset.day) { U.sel = el.dataset.day; U.memo = null; U.edit = false; render(); } break;
+    case 'wk': U.wk += +v; U.sel = null; U.memo = null; U.adTick++; render(); break;
+    case 'wk0': U.wk = 0; U.sel = null; render(); break;
+    case 'month': U.month = !U.month; render(); break;
+    case 'mday': { const d = parseYmd(el.dataset.day); U.wk = Math.round((mondayOf(d) - mondayOf(today())) / 6048e5); U.sel = el.dataset.day; U.month = false; render(); break; }
+    case 'memo-open': { const day = el.dataset.day, mm = S.memos[day]; U.memo = { day, text: mm ? mm.text : '', shared: mm ? !!mm.shared : false }; render(); setTimeout(() => { const t = document.getElementById('memo-text'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }, 30); break; }
+    case 'memo-share': U.memo.shared = !U.memo.shared; render(); break;
+    case 'memo-cancel': U.memo = null; render(); break;
+    case 'memo-del': { const day = U.memo.day; U.memo = null; del('memos/' + day); break; }
+    case 'memo-save': {
+      const m = U.memo, text = m.text.trim().slice(0, 500); U.memo = null;
+      if (!text) del('memos/' + m.day); else put('memos/' + m.day, { text, shared: m.shared, updatedAt: Date.now(), seenAt: null });
+      render(); break;
+    }
+    case 'edit': U.edit = !U.edit; render(); break;
+    case 'del-ev': del((el.dataset.src === 'rule' ? 'rules/' : 'items/') + el.dataset.id); break;
+    case 'dose': { const k = el.dataset.k; if (S.doses[k]) del('doses/' + k); else put('doses/' + k, { at: Date.now(), createdAt: Date.now() }); break; }
+    case 'hide-ad': hideAd(el.dataset.id); break;
+    case 'topic': U.topic = v; U.adTick++; render(); break;
+    case 'post': {
+      const text = U.compose.trim().slice(0, 1000); if (!text) return;
+      const m = currentMilestone();
+      put('posts/p' + Date.now().toString(36), { text, nick: st().nick || '익명', stage: m == null ? '' : MILESTONES[m], topic: U.topic === 'all' ? 'all' : U.topic, likes: 0, createdAt: Date.now() });
+      U.compose = ''; render(); break;
+    }
+    case 'like': { const p = S.posts.find((x) => x.id === el.dataset.id); if (p) put('posts/' + p.id, { likes: (p.likes || 0) + 1 }, true); break; }
+  }
+}
+function saveCapture() {
+  const c = U.capture, now = Date.now(); let n = 0;
+  c.cands.forEach((x, i) => {
+    if (x.kind === 'skip') return;
+    const id = c.id + '-' + i, base = { title: (x.title || KLABEL[x.kind]).slice(0, 60), detail: (x.detail || '').slice(0, 80), captureId: c.id, createdAt: now + i };
+    if (x.kind === 'dose' && x.end) { S.rules.filter((r) => !r.to || r.to > x.date).forEach((r) => put('rules/' + r.id, { to: x.date, updatedAt: now }, true)); n++; return; }
+    if (x.kind === 'open') put('open/' + id, { title: base.title, done: false, captureId: c.id, createdAt: now + i });
+    else if (x.kind === 'dose' && x.daily) put('rules/' + id, Object.assign(base, { kind: 'dose', time: x.time, from: x.date, to: x.to || '' }));
+    else put('items/' + id, Object.assign(base, { kind: x.kind, date: x.date, time: x.time }));
+    n++;
+  });
+  put('captures/' + c.id, { status: 'confirmed', confirmedAt: now, count: n }, true);
+  const first = c.cands.find((x) => x.date && x.kind !== 'skip');
+  U.capture = null; if (U.tab === 'plan' && first) { const d = parseYmd(first.date); U.wk = Math.round((mondayOf(d) - mondayOf(today())) / 6048e5); U.sel = first.date; }
+  render();
+}
+
+/* ---------- boot ---------- */
+render();
+(async () => {
+  try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (!db) { S.offline = true; S.ready = true; applyMem(); return; }
+  const colls = ['settings', 'items', 'rules', 'open', 'memos', 'doses', 'posts'];
+  let pending = new Set(colls);
+  colls.forEach((c) => {
+    db.collection(c).onSnapshot((snap) => {
+      setColl(c, snap.docs.map((d) => ({ id: d.id, data: d.data() || {} })));
+      pending.delete(c); if (!pending.size) S.ready = true;
+      render();
+    }, () => { pending.delete(c); if (!pending.size) S.ready = true; render(); });
+  });
+  setTimeout(() => { if (!S.ready) { S.ready = true; render(); } }, 6000);
+})();
+// Rotate the native rows slowly so the same line doesn't sit there all day.
+setInterval(() => { if (document.hidden || U.capture || U.memo || (document.activeElement && /TEXTAREA|INPUT/.test(document.activeElement.tagName))) return; const el = document.getElementById('calad') || document.getElementById('feedad-0'); if (!el) return; el.classList.add('fade'); setTimeout(() => { U.adTick++; render(); }, 500); }, 24000);
+</script>

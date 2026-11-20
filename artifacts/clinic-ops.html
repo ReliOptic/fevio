@@ -1,0 +1,302 @@
+<title>Fevio 병원 운영</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column on phones (decide → send → call → prepare); on wide screens the decision list on the left and the call list + procedure load on the right. */
+:root{
+  --bg:#EEF0F3; --surface:#FFFFFF; --sunk:#F4F5F7; --ink:#0E0F11; --ink2:#565A63; --ink3:#8A8E96; --line:#E3E5E9;
+  --signal:#1F5BFF; --signal-soft:rgba(31,91,255,.10); --coral:#E5484D; --coral-soft:rgba(229,72,77,.10); --ok:#178A5B; --ok-soft:rgba(23,138,91,.10);
+  --on-ink:#FFFFFF; --shadow:0 1px 2px rgba(14,15,17,.06),0 8px 24px rgba(14,15,17,.06);
+  --font:'IBM Plex Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1012; --surface:#1A1B1E; --sunk:#232428; --ink:#F2F3F5; --ink2:#B3B6BD; --ink3:#7F838B; --line:#2D2F34;
+  --signal:#6A90FF; --signal-soft:rgba(106,144,255,.16); --coral:#FF6B6F; --coral-soft:rgba(255,107,111,.14); --ok:#3DC48A; --ok-soft:rgba(61,196,138,.14);
+  --on-ink:#0E0F11; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1012; --surface:#1A1B1E; --sunk:#232428; --ink:#F2F3F5; --ink2:#B3B6BD; --ink3:#7F838B; --line:#2D2F34;
+  --signal:#6A90FF; --signal-soft:rgba(106,144,255,.16); --coral:#FF6B6F; --coral-soft:rgba(255,107,111,.14); --ok:#3DC48A; --ok-soft:rgba(61,196,138,.14);
+  --on-ink:#0E0F11; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+button,input,textarea,select{font:inherit;color:inherit;letter-spacing:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:10px}
+.num{font-variant-numeric:tabular-nums}
+.hatch{background-image:repeating-linear-gradient(135deg,var(--signal-soft) 0 5px,transparent 5px 10px)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header.top h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+header.top .date{color:var(--ink2);font-size:14px;font-weight:500}
+.sp{flex:1}
+.btn{height:38px;padding:0 14px;border-radius:19px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.ink{background:var(--ink);color:var(--on-ink)}
+.btn.line{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.ghost{color:var(--ink2)}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn[disabled]{opacity:.4;cursor:default}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.kpi{background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:inset 0 0 0 1px var(--line)}
+.kpi .v{font-size:26px;font-weight:700;line-height:1.1}
+.kpi .v small{font-size:14px;color:var(--ink3);font-weight:600}
+.kpi .l{font-size:12px;color:var(--ink2);font-weight:600;margin-top:2px}
+.kpi.warn .v{color:var(--coral)}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec h2{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sec h2 .c{font-size:12px;color:var(--ink3);font-weight:600}
+.card{background:var(--surface);border-radius:18px;box-shadow:inset 0 0 0 1px var(--line)}
+.add{display:flex;gap:8px;padding:10px}
+.add input{flex:1;min-width:0;height:40px;border:0;border-radius:12px;background:var(--sunk);padding:0 12px;font-size:15px}
+.prow{border-top:1px solid var(--line)}
+.prow:first-child{border-top:0}
+.phead{display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left}
+.code{font-weight:700;font-size:15px;font-family:var(--mono);letter-spacing:0}
+.st{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:700;white-space:nowrap}
+.st.todo{background:var(--sunk);color:var(--ink2)}
+.st.sent{background:var(--signal-soft);color:var(--signal)}
+.st.ok{background:var(--ok-soft);color:var(--ok)}
+.st.late{background:var(--coral-soft);color:var(--coral)}
+.dec{color:var(--ink2);font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbody{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{height:34px;padding:0 12px;border-radius:17px;font-size:13px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink2)}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);box-shadow:none}
+.fgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center}
+.fgrid label{font-size:12px;font-weight:700;color:var(--ink2)}
+.fgrid .in{display:flex;gap:6px;flex-wrap:wrap}
+.fgrid input{height:38px;border:0;border-radius:10px;background:var(--sunk);padding:0 10px;font-size:14px;min-width:0}
+.fgrid input[type=text]{flex:1 1 180px}
+.msg{width:100%;min-height:150px;border:0;border-radius:14px;background:var(--sunk);padding:12px;font-family:var(--mono);font-size:13px;line-height:1.6;resize:vertical;letter-spacing:0}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hint{font-size:12px;color:var(--ink3)}
+.calls .item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.calls .item:first-child{border-top:0}
+.calls .why{flex:1;min-width:0;font-size:13px;color:var(--ink2)}
+.empty{padding:16px 14px;color:var(--ink2);font-size:14px}
+.load{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.lrow{display:grid;grid-template-columns:62px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px}
+.lrow .d{font-weight:700}
+.bars{display:flex;gap:3px;height:16px;align-items:stretch}
+.bars i{width:14px;border-radius:3px;background:var(--ink)}
+.bars i.cond{background:transparent;box-shadow:inset 0 0 0 1.5px var(--signal)}
+.bars i.cond.hatch{background-image:repeating-linear-gradient(135deg,var(--signal-soft) 0 4px,transparent 4px 8px)}
+.bars i.tr{background:var(--signal)}
+.lrow .n{color:var(--ink2);text-align:right}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);padding:0 14px 12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sum{padding:0 14px 12px;font-size:13px;color:var(--ink2)}
+.settings{padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.settings label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--ink2)}
+.settings input{height:38px;border:0;border-radius:10px;background:var(--sunk);padding:0 10px;font-size:14px}
+.status{font-size:12px;color:var(--ink3);margin-top:8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:10px 16px;border-radius:20px;font-size:14px;font-weight:600;z-index:10}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+'use strict';
+const pad = (n) => String(n).padStart(2, '0');
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+const ymd = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parseYmd = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const md = (s) => { const d = parseYmd(s); return (d.getMonth() + 1) + '/' + d.getDate() + '(' + DOW[d.getDay()] + ')'; };
+const hm = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* Decisions are the clinic's templates. Each one asks only for the fields that change. */
+const DECISIONS = [
+  ['more1', '하루 더'], ['more2', '이틀 더'], ['trigger', '트리거'], ['retrieval', '채취 확정'], ['transfer', '이식'], ['lab', '연구실 연락']
+];
+const DLABEL = Object.fromEntries(DECISIONS);
+function defaults(dec) {
+  const t = today();
+  const f = { visitDate: '', visitTime: '09:00', visitWhat: '초음파·피검사', dose: '변경 없음', doseTime: '21:00', trigDate: ymd(t), trigTime: '22:00', retDate: '', retTime: '07:30', trDate: '', trTime: '10:00', labDate: '', open: '' };
+  if (dec === 'more1' || dec === 'more2') { f.visitDate = ymd(addDays(t, dec === 'more1' ? 1 : 2)); f.open = '채취일 — 다음 검사 뒤 안내'; }
+  if (dec === 'trigger') { f.retDate = ymd(addDays(t, 2)); f.open = ''; }
+  if (dec === 'retrieval') f.retDate = ymd(addDays(t, 1));
+  if (dec === 'transfer') f.trDate = ymd(addDays(t, 1));
+  if (dec === 'lab') { f.labDate = ymd(addDays(t, 1)); f.open = '이식일 — 배아 상태 보고 안내'; }
+  return f;
+}
+// The plan message is the contract with the patient app: one fact per line, "label: date time · detail".
+function buildMessage(clinic, dec, f) {
+  const L = ['[' + (clinic || '병원') + '] 오늘 진료 뒤 계획'];
+  if ((dec === 'more1' || dec === 'more2') && f.visitDate) L.push('다음 내원: ' + md(f.visitDate) + ' ' + f.visitTime + ' ' + f.visitWhat);
+  if (dec === 'more1' || dec === 'more2') L.push('주사: ' + (f.dose || '변경 없음') + ' · 매일 ' + f.doseTime);
+  if (dec === 'trigger') { L.push('트리거: ' + md(f.trigDate) + ' ' + f.trigTime + ' 정각'); L.push('주사: 오늘로 끝'); }
+  if ((dec === 'trigger' || dec === 'retrieval') && f.retDate) L.push('채취: ' + md(f.retDate) + ' ' + f.retTime + ' · 전날 24시부터 금식');
+  if (dec === 'transfer' && f.trDate) L.push('이식: ' + md(f.trDate) + ' ' + f.trTime);
+  if (dec === 'lab' && f.labDate) L.push('연구실 연락: ' + md(f.labDate) + ' 오전');
+  if (f.open) L.push('미정: ' + f.open);
+  L.push('Fevio에 붙여 넣으면 일정으로 정리돼요.');
+  return L.join('\n');
+}
+
+const S = { ready: false, offline: false, settings: {}, plans: [], patients: [] };
+const U = { open: null, draft: null, newCode: '', settings: false, toast: '' };
+let db = null; const mem = {};
+const st = () => Object.assign({ clinic: '', cutoff: '16:00' }, S.settings);
+
+async function put(path, data, merge) {
+  if (db) { try { await (merge ? db.doc(path).update(data) : db.doc(path).set(data)); } catch (e) { if (merge) { try { await db.doc(path).set(data); } catch (e2) { toast('저장하지 못했어요. 잠시 뒤 다시 해 주세요.'); } } else toast(e && e.code === 'quota_exceeded' ? '저장 공간이 가득 찼어요.' : '저장하지 못했어요. 잠시 뒤 다시 해 주세요.'); } return; }
+  const [c, id] = path.split('/'); mem[c] = mem[c] || {}; mem[c][id] = merge ? Object.assign({}, mem[c][id] || {}, data) : data; applyMem();
+}
+function setColl(c, docs) { if (c === 'settings') S.settings = (docs.find((d) => d.id === 'main') || {}).data || {}; else S[c] = docs.map((d) => Object.assign({ id: d.id }, d.data)); }
+function applyMem() { ['settings', 'plans', 'patients'].forEach((c) => setColl(c, Object.entries(mem[c] || {}).map(([id, data]) => ({ id, data })))); render(); }
+function toast(t) { U.toast = t; render(); clearTimeout(toast.t); toast.t = setTimeout(() => { U.toast = ''; render(); }, 2600); }
+
+/* ---------- derived ---------- */
+const todays = () => { const t = ymd(today()); return S.plans.filter((p) => p.date === t).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); };
+function stateOf(p) {
+  if (p.confirmedAt) return ['ok', '확인 ' + hm(p.confirmedAt)];
+  if (p.sentAt) return nowHM() >= st().cutoff ? ['late', '확인 없음'] : ['sent', '안내 ' + hm(p.sentAt)];
+  if (p.decision) return ['todo', '안내 전'];
+  return ['todo', '결정 전'];
+}
+function callList() {
+  const out = [], cut = st().cutoff, late = nowHM() >= cut;
+  todays().forEach((p) => {
+    if (p.confirmedAt || p.calledAt) return;
+    if (!p.decision) return;
+    if (!p.sentAt) out.push({ p, why: DLABEL[p.decision] + ' 결정 · 아직 안내 안 함', urgent: true });
+    else if (late) out.push({ p, why: hm(p.sentAt) + ' 안내 · ' + cut + '까지 확인 없음', urgent: true });
+  });
+  return out;
+}
+// Procedure load for the next 7 days, from each patient's latest plan.
+function load() {
+  const latest = {};
+  S.plans.forEach((p) => { if (!p.decision) return; const k = p.code; if (!latest[k] || p.date > latest[k].date) latest[k] = p; });
+  const days = Array.from({ length: 7 }, (_, i) => ({ day: ymd(addDays(today(), i + 1)), ret: [], cond: [], tr: [] }));
+  const idx = (d) => days.findIndex((x) => x.day === d);
+  const condPeople = new Set(), retPeople = new Set();
+  Object.values(latest).forEach((p) => {
+    const f = p.f || {};
+    if ((p.decision === 'trigger' || p.decision === 'retrieval') && f.retDate) { const i = idx(f.retDate); if (i >= 0) { days[i].ret.push(p.code); retPeople.add(p.code); } }
+    if ((p.decision === 'more1' || p.decision === 'more2') && f.visitDate) {
+      // after one or two more days of stimulation, retrieval usually falls 2–4 days after the next scan; shown as possible, not booked
+      for (let k = 2; k <= 4; k++) { const i = idx(ymd(addDays(parseYmd(f.visitDate), k))); if (i >= 0) { days[i].cond.push(p.code); condPeople.add(p.code); } }
+    }
+    if (p.decision === 'transfer' && f.trDate) { const i = idx(f.trDate); if (i >= 0) days[i].tr.push(p.code); }
+  });
+  return { days, condPeople: condPeople.size, retPeople: retPeople.size };
+}
+
+/* ---------- render ---------- */
+function render() {
+  const a = document.activeElement; const keep = a && a.id ? { id: a.id, s: a.selectionStart, e: a.selectionEnd } : null;
+  const s = st(), list = todays(), calls = callList(), L = load();
+  const decided = list.filter((p) => p.decision).length, sent = list.filter((p) => p.sentAt).length, ok = list.filter((p) => p.confirmedAt).length;
+  const t = today();
+  let h = '<header class="top"><h1>' + esc(s.clinic || '병원 이름을 넣어 주세요') + '</h1><span class="date num">' + (t.getMonth() + 1) + '월 ' + t.getDate() + '일 ' + DOW[t.getDay()] + '요일 · 오전 모니터링</span><span class="sp"></span><button class="btn line sm" data-act="settings" aria-expanded="' + U.settings + '">설정</button></header>';
+  if (U.settings || !s.clinic) h += '<div class="card settings" style="margin-top:12px"><label for="s-clinic">병원 이름<input id="s-clinic" data-set="clinic" value="' + esc(s.clinic) + '" placeholder="안내문 첫 줄에 들어가요"></label><label for="s-cut">확인 마감<input id="s-cut" type="time" data-set="cutoff" value="' + esc(s.cutoff) + '"></label><span class="hint">마감까지 환자 확인이 없으면 전화할 사람으로 올라와요.</span></div>';
+  h += '<div class="kpis"><div class="kpi"><div class="v num">' + decided + '<small> / ' + list.length + '</small></div><div class="l">오늘 결정</div></div><div class="kpi"><div class="v num">' + sent + '</div><div class="l">안내문 보냄</div></div><div class="kpi"><div class="v num">' + ok + '</div><div class="l">환자 확인</div></div><div class="kpi' + (calls.length ? ' warn' : '') + '"><div class="v num">' + calls.length + '</div><div class="l">전화할 사람</div></div></div>';
+  h += '<div class="cols"><section class="sec"><h2>오늘 본 환자 <span class="c num">' + list.length + '명</span></h2><div class="card">';
+  h += '<form class="add" data-form="add"><label for="new-code" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">환자 번호</label><input id="new-code" list="codes" autocomplete="off" placeholder="환자 번호 (예: P-0419)" value="' + esc(U.newCode) + '"><datalist id="codes">' + S.patients.map((p) => '<option value="' + esc(p.code) + '">').join('') + '</datalist><button class="btn ink" type="submit">추가</button></form>';
+  if (!list.length) h += '<div class="empty" style="border-top:1px solid var(--line)">오늘 초음파·피검사를 본 환자 번호를 추가하면, 결정과 안내를 여기서 이어서 해요.</div>';
+  list.forEach((p) => {
+    const [cls, label] = stateOf(p), open = U.open === p.id;
+    h += '<div class="prow" style="border-top:1px solid var(--line)"><button class="phead" data-act="open" data-id="' + p.id + '" aria-expanded="' + open + '"><span class="code">' + esc(p.code) + '</span><span class="dec">' + (p.decision ? esc(DLABEL[p.decision]) : '') + '</span><span class="st ' + cls + ' num">' + label + '</span></button>';
+    if (open) h += composer(p);
+    h += '</div>';
+  });
+  h += '</div></section><div class="sec">';
+  h += '<section class="sec"><h2>전화할 사람 <span class="c">' + (nowHM() >= s.cutoff ? s.cutoff + ' 지남' : s.cutoff + '부터 확인 없음도 포함') + '</span></h2><div class="card calls">';
+  h += calls.length ? calls.map((c) => '<div class="item"><span class="code">' + esc(c.p.code) + '</span><span class="why">' + esc(c.why) + '</span><button class="btn line sm" data-act="called" data-id="' + c.p.id + '">전화함</button></div>').join('') : '<div class="empty">' + (list.length ? '지금은 전화할 사람이 없어요.' : '오늘 본 환자를 추가하면 여기에 정리돼요.') + '</div>';
+  h += '</div></section>';
+  h += '<section class="sec"><h2>다음 7일 시술 준비</h2><div class="card"><div class="load">' + L.days.map((d) => {
+    const bars = d.ret.map(() => '<i></i>').join('') + d.cond.map(() => '<i class="cond hatch"></i>').join('') + d.tr.map(() => '<i class="tr"></i>').join('');
+    const n = [d.ret.length ? '채취 ' + d.ret.length : '', d.cond.length ? '가능 ' + d.cond.length : '', d.tr.length ? '이식 ' + d.tr.length : ''].filter(Boolean).join(' · ');
+    return '<div class="lrow"><span class="d num">' + md(d.day) + '</span><span class="bars" aria-label="' + esc(n || '없음') + '">' + bars + '</span><span class="n num">' + (n || '—') + '</span></div>';
+  }).join('') + '</div><div class="legend"><span><i style="background:var(--ink)"></i>채취 확정</span><span><i class="hatch" style="box-shadow:inset 0 0 0 1.5px var(--signal)"></i>채취 가능(검사 뒤 확정)</span><span><i style="background:var(--signal)"></i>이식</span></div>' +
+    '<div class="sum num">이번 주 채취 확정 ' + L.retPeople + '명 · 채취 가능 ' + L.condPeople + '명</div></div></section>';
+  h += '</div></div>';
+  if (S.offline) h += '<div class="status">이 보기에서는 저장되지 않아요. 새로고침하면 사라져요.</div>';
+  if (!S.ready) h += '<div class="status">불러오는 중…</div>';
+  if (U.toast) h += '<div class="toast" role="status">' + esc(U.toast) + '</div>';
+  document.getElementById('app').innerHTML = h;
+  if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { if (keep.s != null) el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
+}
+function composer(p) {
+  const d = U.draft, f = d.f;
+  const fld = (label, inner) => '<label>' + label + '</label><span class="in">' + inner + '</span>';
+  const date = (k) => '<input type="date" data-f="' + k + '" value="' + esc(f[k]) + '" aria-label="날짜">';
+  const time = (k) => '<input type="time" data-f="' + k + '" value="' + esc(f[k]) + '" aria-label="시각">';
+  let g = '';
+  if (d.decision === 'more1' || d.decision === 'more2') g += fld('다음 내원', date('visitDate') + time('visitTime') + '<input type="text" data-f="visitWhat" value="' + esc(f.visitWhat) + '" aria-label="검사">') + fld('주사', '<input type="text" data-f="dose" value="' + esc(f.dose) + '" aria-label="주사 용량">' + time('doseTime'));
+  if (d.decision === 'trigger') g += fld('트리거', date('trigDate') + time('trigTime'));
+  if (d.decision === 'trigger' || d.decision === 'retrieval') g += fld('채취', date('retDate') + time('retTime'));
+  if (d.decision === 'transfer') g += fld('이식', date('trDate') + time('trTime'));
+  if (d.decision === 'lab') g += fld('연락 날짜', date('labDate'));
+  if (d.decision) g += fld('아직 미정', '<input type="text" data-f="open" value="' + esc(f.open) + '" placeholder="없으면 비워 두기" aria-label="아직 미정">');
+  const msg = d.decision ? buildMessage(st().clinic, d.decision, f) : '';
+  return '<div class="pbody"><div class="chips" role="group" aria-label="결정">' + DECISIONS.map((x) => '<button aria-pressed="' + (d.decision === x[0]) + '" data-act="dec" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+    (d.decision ? '<div class="fgrid">' + g + '</div><label for="msg-' + p.id + '" class="hint">환자에게 가는 안내문</label><textarea id="msg-' + p.id + '" class="msg" readonly>' + esc(msg) + '</textarea>' +
+      '<div class="row"><button class="btn ink" data-act="send" data-id="' + p.id + '">' + (p.sentAt ? '다시 복사' : '안내문 복사 · 보냄으로 표시') + '</button>' + (p.sentAt && !p.confirmedAt ? '<button class="btn line" data-act="confirm" data-id="' + p.id + '">환자 확인 받음</button>' : '') + '<span class="sp"></span><button class="btn ghost" data-act="remove" data-id="' + p.id + '">목록에서 빼기</button></div>' +
+      '<span class="hint">문자·알림톡에 붙여 보내 주세요.</span>' : '<span class="hint">오늘 결정을 고르면 필요한 칸만 나와요.</span>') + '</div>';
+}
+
+/* ---------- events ---------- */
+document.addEventListener('submit', (ev) => {
+  if (ev.target.dataset.form !== 'add') return; ev.preventDefault();
+  const code = (document.getElementById('new-code').value || '').trim().toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 16);
+  if (!code) return;
+  const t = ymd(today()), id = t + '_' + code;
+  if (S.plans.some((p) => p.id === id)) { U.open = id; U.draft = draftFrom(S.plans.find((p) => p.id === id)); U.newCode = ''; render(); return; }
+  put('patients/' + code, { code, lastSeen: t, createdAt: Date.now() });
+  put('plans/' + id, { date: t, code, decision: '', f: {}, createdAt: Date.now() });
+  U.newCode = ''; U.open = id; U.draft = { decision: '', f: {} }; render();
+});
+const draftFrom = (p) => ({ decision: p.decision || '', f: Object.assign(defaults(p.decision), p.f || {}) });
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  const p = id ? S.plans.find((x) => x.id === id) : null;
+  if (act === 'settings') { U.settings = !U.settings; render(); }
+  if (act === 'open') { if (U.open === id) { U.open = null; U.draft = null; } else { U.open = id; U.draft = draftFrom(p); } render(); }
+  if (act === 'dec') { const v = el.dataset.v; U.draft = { decision: v, f: Object.assign(defaults(v), U.draft.decision === v ? U.draft.f : {}) }; put('plans/' + U.open, { decision: v, f: U.draft.f, updatedAt: Date.now() }, true); render(); }
+  if (act === 'send' && p) {
+    const msg = buildMessage(st().clinic, U.draft.decision, U.draft.f);
+    const done = () => { put('plans/' + id, { decision: U.draft.decision, f: U.draft.f, message: msg, sentAt: p.sentAt || Date.now(), updatedAt: Date.now() }, true); };
+    try {
+      navigator.clipboard.writeText(msg).then(() => { done(); toast('안내문을 복사했어요. 문자·알림톡에 붙여 보내 주세요.'); }, () => { done(); selectMsg(id); toast('복사가 막혀 있어요. 선택된 글을 길게 눌러 복사해 주세요.'); });
+    } catch (e) { done(); selectMsg(id); toast('복사가 막혀 있어요. 선택된 글을 길게 눌러 복사해 주세요.'); }
+  }
+  if (act === 'confirm' && p) put('plans/' + id, { confirmedAt: Date.now(), updatedAt: Date.now() }, true);
+  if (act === 'called' && p) { put('plans/' + id, { calledAt: Date.now(), updatedAt: Date.now() }, true); toast(p.code + ' 전화함으로 표시했어요'); }
+  if (act === 'remove' && p) { if (db) db.doc('plans/' + id).delete().catch(() => toast('지우지 못했어요.')); else { delete (mem.plans || {})[id]; applyMem(); } U.open = null; U.draft = null; render(); }
+});
+function selectMsg(id) { const t = document.getElementById('msg-' + id); if (t) { t.focus(); t.select(); } }
+document.addEventListener('input', (ev) => {
+  const t = ev.target;
+  if (t.id === 'new-code') U.newCode = t.value;
+  if (t.dataset.f && U.draft) {
+    U.draft.f[t.dataset.f] = t.value;
+    const box = U.open && document.getElementById('msg-' + U.open);
+    if (box) box.value = buildMessage(st().clinic, U.draft.decision, U.draft.f);
+  }
+});
+document.addEventListener('change', (ev) => { const t = ev.target; if (t.dataset.f && U.draft && U.open) put('plans/' + U.open, { f: U.draft.f, updatedAt: Date.now() }, true); if (t.dataset.set) put('settings/main', { [t.dataset.set]: t.value.trim().slice(0, 40), updatedAt: Date.now() }, true); });
+
+/* ---------- boot ---------- */
+render();
+(async () => {
+  try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (!db) { S.offline = true; S.ready = true; render(); return; }
+  const colls = ['settings', 'plans', 'patients'], pending = new Set(colls);
+  colls.forEach((c) => db.collection(c).onSnapshot((snap) => { setColl(c, snap.docs.map((d) => ({ id: d.id, data: d.data() || {} }))); pending.delete(c); if (!pending.size) S.ready = true; if (!(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName) && U.open)) render(); }, () => { pending.delete(c); if (!pending.size) S.ready = true; render(); }));
+  setTimeout(() => { if (!S.ready) { S.ready = true; render(); } }, 6000);
+})();
+// Re-evaluate the cutoff once a minute so late confirmations move to the call list without a reload.
+setInterval(() => { if (!(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); }, 60000);
+</script>
