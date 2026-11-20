@@ -163,6 +163,14 @@ var FEED_ADS = [
 ];
 var PREP_ADS = { proc: ['새벽콜', '귀가 택시 미리 예약', 'car'], dose: ['포켓쿨', '휴대용 보냉 파우치', 'cold'], visit: ['파킹온', '병원 근처 주차 미리 결제', 'car'] };
 
+/* ===== Clinic directory: sample entries exist only while the demo plays ===== */
+var DEMO_CLINICS = [
+  { name: '서울OO난임센터', area: '서울 마포구', addr: '서울 마포구 OO로 123 · 본관 3층', phone: '02-1234-5678', hours: '평일 08:00–17:00 · 토 08:00–13:00' },
+  { name: 'OO여성의원 난임클리닉', area: '서울 강남구', addr: '서울 강남구 OO대로 45 · 5층', phone: '02-555-0101', hours: '평일 08:30–17:30 · 토 08:30–12:30' },
+  { name: 'OO대학교병원 난임센터', area: '서울 종로구', addr: '서울 종로구 OO길 7 · 별관 2층', phone: '02-740-0000', hours: '평일 09:00–17:00' },
+  { name: '경기OO난임센터', area: '경기 성남시 분당구', addr: '경기 성남시 분당구 OO로 88', phone: '031-700-0000', hours: '평일 08:00–17:00 · 토 08:00–13:00' },
+  { name: 'OO산부인과 난임클리닉', area: '경기 고양시 일산동구', addr: '경기 고양시 일산동구 OO로 21', phone: '031-900-0000', hours: '평일 09:00–18:00' }
+];
 /* ===== Store: the artifact database when served, memory otherwise ===== */
 var D = { ready: false, offline: false, settings: {}, items: [], rules: [], open: [], plans: [], memos: {}, doses: {}, posts: [], reqs: [], asks: [] };
 var db = null, mem = {}, assets = null;
@@ -187,6 +195,8 @@ var S = () => Object.assign({ accepted: false, stage: null, share: 1, lab: false
 var meN = () => S().me || '환자';
 var ptN = () => S().partner || '배우자';
 var clinicN = () => S().clinic || '다니는 병원';
+// Korean particle by the last syllable: josa('센터', '을', '를') → '센터를'
+var josa = (w, a, b) => { var c = (w || '').charCodeAt((w || '').length - 1) - 0xAC00; return w + (c >= 0 && c <= 11171 && c % 28 ? a : b); };
 
 /* ===== Derived care state ===== */
 function ruleFor(day) {
@@ -292,7 +302,7 @@ class App {
       put('settings/main', { stage: i, stageAt: TODAY(), updatedAt: nowMs() }, true);
       self.push([me(t), fv('표시했어요.\n병원에서 받은 안내문을 찍어 주세요. 날짜와 시간만 골라 정리하고, 확인받은 것만 넣을게요.')], { conv: 'menu' }); self.setState({ attach: true }); self.reanchor(true);
     }));
-    if (u.conv === 'clinic' || u.conv === 'phone' || u.conv === 'meName' || u.conv === 'ptName') return [Q('건너뛰기', () => self.answerSetup(''))];
+    if (u.conv === 'clinic' || u.conv === 'phone' || u.conv === 'meName' || u.conv === 'ptName' || u.conv === 'region') return [Q('건너뛰기', () => self.answerSetup(''))];
     if (u.conv === 'confirm') return [Q('맞아요', () => self.saveCands(), true), Q('고칠 게 있어요', () => self.fixCands())];
     if (u.conv === 'fix') return [Q('다 됐어요', () => self.saveCands(), true), Q('그만둘게요', () => self.push([me('그만둘게요'), fv('저장하지 않았어요.')], { conv: 'menu', cands: null }))];
     if (u.conv === 'sym') return ['배가 많이 부르고 아파요', '숨이 차요', '출혈이 있어요', '열이 나요', '주사 부위가 부었어요', '다른 증상이에요'].map((t) => Q(t, () => self.symCard(t)));
@@ -303,7 +313,7 @@ class App {
   }
   answerSetup(text) {
     var u = this.u, t = text.trim(), next = ['menu', t ? '바꿨어요.' : '그대로 둘게요.'];
-    var key = { clinic: 'clinic', phone: 'phone', meName: 'me', ptName: 'partner' }[u.conv];
+    var key = { clinic: 'clinic', phone: 'phone', meName: 'me', ptName: 'partner', region: 'region' }[u.conv];
     if (t) put('settings/main', { [key]: t.slice(0, 30), updatedAt: nowMs() }, true);
     this.push([me(t || '건너뛰기'), fv(next[1])], { conv: next[0], text: '' });
   }
@@ -346,7 +356,7 @@ class App {
   }
   copyAct(label, text) {
     var self = this;
-    return { t: label, bg: '#FFFFFF', ink: INK, edge: 'inset 0 0 0 1.5px ' + LINE, tap: () => { try { navigator.clipboard.writeText(text).then(() => self.say('복사했어요'), () => self.say('복사가 막혀 있어요 · 길게 눌러 복사해 주세요')); } catch (e) { self.say('복사가 막혀 있어요'); } } };
+    return { t: label, bg: '#FFFFFF', ink: INK, edge: 'inset 0 0 0 1.5px ' + LINE, tap: () => { try { navigator.clipboard.writeText(text).then(() => self.say('복사했어요'), () => self.say('복사가 막혀 있어요 · 길게 눌러 복사해 주세요')).catch(() => {}); } catch (e) { self.say('복사가 막혀 있어요'); } } };
   }
   startResched(item) {
     var label = dmd(item.date) + (item.time ? ' ' + item.time : '') + ' ' + item.title;
@@ -357,11 +367,11 @@ class App {
     var s = S(), msg = '[예약 문의] ' + (s.me ? s.me + ' · ' : '') + what + '\n가능한 시간을 알려 주세요.';
     var id = 'q' + Date.now().toString(36);
     put('reqs/' + id, { t: what, item: itemId || '', status: 'draft', createdAt: nowMs() });
-    this.push([me(what), card(clinicN() + '에 보낼 글', msg, '복사해서 병원 문자·카톡으로 보내 주세요 · 바뀌기 전까지 지금 일정은 그대로예요', 'clinic', [Object.assign(this.copyAct('복사하고 보냄으로 표시', msg), { tap: () => { try { navigator.clipboard.writeText(msg); } catch (e) {} put('reqs/' + id, { status: 'sent', sentAt: nowMs() }, true); this.say('보냄으로 표시했어요 · 병원 답 기다림'); } })])], { conv: 'menu' });
+    this.push([me(what), card(clinicN() + '에 보낼 글', msg, '복사해서 병원 문자·카톡으로 보내 주세요 · 바뀌기 전까지 지금 일정은 그대로예요', 'clinic', [Object.assign(this.copyAct('복사하고 보냄으로 표시', msg), { tap: () => { try { navigator.clipboard.writeText(msg).catch(() => {}); } catch (e) {} put('reqs/' + id, { status: 'sent', sentAt: nowMs() }, true); this.say('보냄으로 표시했어요 · 병원 답 기다림'); } })])], { conv: 'menu' });
   }
   submitText() {
     var u = this.u, t = u.text.trim(); if (!t) return;
-    if (['clinic', 'phone', 'meName', 'ptName'].includes(u.conv)) return this.answerSetup(t);
+    if (['clinic', 'phone', 'meName', 'ptName', 'region'].includes(u.conv)) return this.answerSetup(t);
     var cands = parseClinicText(t, today0()), useful = cands.filter((c) => c.kind !== 'skip');
     if (useful.length && (useful.some((c) => c.date || c.time || c.daily || c.end) || useful.length > 1)) {
       var capId = 'cap' + Date.now().toString(36);
@@ -408,7 +418,7 @@ class App {
     if (u.capMeta) { var sm = S(), up = {}; if (u.capMeta.clinic && !sm.clinic) up.clinic = u.capMeta.clinic.slice(0, 30); if (u.capMeta.phone && !sm.phone) up.phone = u.capMeta.phone.slice(0, 20); if (Object.keys(up).length) put('settings/main', Object.assign(up, { updatedAt: now }), true); }
     put('captures/' + u.capId, { status: 'confirmed', confirmedAt: now, count: n }, true);
     if (rows.length) put('plans/' + u.capId, { date: TODAY(), at: now, rows: rows.slice(0, 4), short: first ? mdl(first.date) + (first.time ? ' ' + first.time : '') : rows[0][1].slice(0, 12), acked: !fromClinic, from: fromClinic ? 'clinic' : 'patient', createdAt: now });
-    if (fromClinic) { this.u.cands = null; this.say(clinicN() + '이 오늘 계획을 보냈어요'); this.reanchor(true); return; }
+    if (fromClinic) { this.u.cands = null; this.say(josa(clinicN(), '이', '가') + ' 오늘 계획을 보냈어요'); this.reanchor(true); return; }
     var s = S();
     this.push([me(u.conv === 'fix' ? '다 됐어요' : '맞아요'), fv('저장했어요. 오늘과 일정에 들어갔어요.' + (s.share ? '\n' + ptN() + ' 님 화면에도 바로 보여요.' : ''))], { conv: 'menu', cands: null });
     clearTimeout(this.tc); this.tc = setTimeout(() => { if (this.u.curtain && !this.u.text) { this.closeCurtain(); this.reanchor(true); } }, 1600);
@@ -597,12 +607,38 @@ class App {
     var self = this;
     return out.slice(0, 6).map((p, i) => ({ t: p[0], s: p[1], icon: ICP[p[2]] || ICP.doc, isAd: p[3] === 'ad', bg: '#FFFFFF', divider: i ? '1px solid ' + LINE : '0', hide: () => self.hideAd(p[4]) }));
   }
-  support() {
-    return [
-      { who: '국가', t: '난임부부 시술비 지원', s: '보건소 신청', sub: '시술 전 보건소에서 지원결정통지서', sBg: INK, sInk: '#FFFFFF', o: 1 },
-      { who: '지자체', t: '사는 곳 추가 지원', s: '찾아보기', sub: '정부24 · 보조금24에서 거주지로 검색', sBg: 'rgba(31,91,255,0.10)', sInk: SIGNAL, o: 1 },
-      { who: '직장', t: '난임치료휴가', s: '회사 신청', sub: '연 6일 · 그중 2일 유급', sBg: '#F4F4F5', sInk: INK2, o: 1 }
-    ].map((g, i) => Object.assign(g, { divider: i ? '1px solid ' + LINE : '0' }));
+  // 정부지원: each program opens to steps, papers and actions tied to this cycle. Links go to the official sites.
+  support(role) {
+    var self = this, s = S(), gov = s.gov || {}, cur = currentMs(), t = TODAY(), partner = role === 'partner', open = partner ? this.u.pGovOpen : this.u.govOpen;
+    var days = []; for (var i = 0; i < 7; i++) { var d = ymd(addDays(today0(), i)); if (eventsOn(d).some((e) => e.k !== 'dose' && e.k !== 'call')) days.push(d); }
+    var mark = (k, label) => ({ t: gov[k] ? label + ' ✓' : label, bg: gov[k] ? INK : '#FFFFFF', ink: gov[k] ? '#FFFFFF' : INK, edge: gov[k] ? 'none' : 'inset 0 0 0 1.5px ' + LINE, href: '', tap: () => { var g = Object.assign({}, S().gov || {}); g[k] = !g[k]; put('settings/main', { gov: g, updatedAt: nowMs() }, true); } });
+    var link = (label, href) => ({ t: label, bg: INK, ink: '#FFFFFF', edge: 'none', href: href, tap: NOOP });
+    var act = (label, fn) => ({ t: label, bg: '#FFFFFF', ink: INK, edge: 'inset 0 0 0 1.5px ' + LINE, href: '', tap: fn });
+    var before = cur == null || cur < 3;
+    var list = [
+      { k: 'fee', who: '국가', t: '난임부부 시술비 지원', sub: before ? '시술 전에 보건소 지원결정통지서가 있어야 해요' : '통지서를 병원에 냈는지 확인해 두세요', s: gov.fee ? '신청함' : (before ? '시술 전 필요' : '확인'), hot: !gov.fee && before,
+        steps: ['보건소에 신청해요 (온라인 신청도 돼요)', '지원결정통지서를 받아요', '시술 전에 병원에 통지서를 내요'], docs: ['난임진단서 (병원)', '신분증', '보건소마다 추가 서류가 달라요'],
+        acts: [act('신청 정보 복사', () => { var t2 = '신청인: ' + meN() + '\n사는 곳: ' + (s.region || '') + '\n시술 병원: ' + clinicN() + (s.phone ? ' ' + s.phone : ''); try { navigator.clipboard.writeText(t2).catch(() => {}); } catch (e) {} self.say('복사했어요 · 신청 페이지에 붙여 넣으세요'); }), link('신청 페이지 열기', 'https://www.gov.kr'), mark('fee', '신청했어요')] },
+      { k: 'local', who: '지자체', t: '사는 곳 추가 지원', sub: s.region ? s.region + ' 지원을 찾아볼 수 있어요' : '사는 곳을 넣으면 맞는 지원을 찾아요', s: gov.local ? '확인함' : '찾아보기', hot: false,
+        steps: ['보조금24에서 사는 곳으로 검색해요', '난임·임신 지원 항목을 확인해요'], docs: [],
+        acts: [link('보조금 찾아보기', 'https://www.gov.kr/portal/rcvfvrSvc/main'), act(s.region ? '사는 곳 바꾸기' : '사는 곳 넣기', () => self.ask('region', '사는 곳(시·군·구)을 알려 주세요. 지원 찾기에만 써요.')), mark('local', '확인했어요')] },
+      { k: 'leave', who: '직장', t: '난임치료휴가', sub: '연 6일 · 그중 2일 유급', s: days.length ? '이번 주 병원 ' + days.length + '일' : '회사 신청', hot: days.length > 0,
+        steps: ['병원 가는 날을 회사에 미리 신청해요', '병원 이름이나 시술 내용은 쓰지 않아도 돼요'], docs: ['진료 확인서 (회사가 요청할 때)'],
+        acts: partner ? [] : [act('휴가 신청 글 만들기', () => self.leaveDraft(days)), mark('leave', '신청했어요')] },
+      { k: 'tax', who: '세금', t: '난임시술비 의료비 공제', sub: '병원 영수증과 진료비 세부내역서를 모아 두세요', s: gov.tax ? '모으는 중' : '모아 두기', hot: false,
+        steps: ['시술비는 일반 의료비보다 공제율이 높아요', '병원에서 진료비 세부내역서를 받아 두세요'], docs: ['영수증', '진료비 세부내역서'], acts: [mark('tax', '모으고 있어요')] }
+    ];
+    return list.map((g, i) => Object.assign(g, { divider: i ? '1px solid ' + LINE : '0', o: 1,
+      sBg: g.hot ? 'rgba(31,91,255,0.12)' : (gov[g.k] ? INK : '#F4F4F5'), sInk: g.hot ? SIGNAL : (gov[g.k] ? '#FFFFFF' : INK2),
+      open: open === g.k, chev: open === g.k ? 90 : 0, tap: () => self.setState(partner ? { pGovOpen: open === g.k ? null : g.k } : { govOpen: open === g.k ? null : g.k }),
+      steps: g.steps.map((x, j) => ({ n: j + 1, t: x })), hasDocs: g.docs.length > 0,
+      acts: (partner ? g.acts.filter((a) => a.href) : g.acts).map((a) => Object.assign(a, { hasHref: !!a.href, noHref: !a.href })), hasActs: (partner ? g.acts.filter((a) => a.href) : g.acts).length > 0 }));
+  }
+  leaveDraft(days) {
+    var lst = days.length ? days : []; for (var i = 7; i < 21 && lst.length < 3; i++) { var d = ymd(addDays(today0(), i)); if (eventsOn(d).some((e) => e.k !== 'dose' && e.k !== 'call')) lst.push(d); }
+    var msg = '안녕하세요. 아래 날짜에 난임치료휴가를 신청합니다.\n' + (lst.length ? lst.map((d) => '· ' + dmd(d)).join('\n') : '· (날짜)') + '\n일정이 바뀌면 다시 말씀드리겠습니다.';
+    this.open({ curFrom: 'today' });
+    this.push([card('회사에 보낼 글', msg, '병원 이름과 시술 내용은 넣지 않았어요', 'read', [this.copyAct('복사하기', msg)])]);
   }
 
   /* ----- values for both phone templates ----- */
@@ -680,12 +716,22 @@ class App {
     var addPost = async () => {
       var txt = self.u.postText.trim().slice(0, 1000), imgs = [];
       if (self.u.postFiles.length && assets) { for (var f of self.u.postFiles.slice(0, 4)) { try { var r = await assets.upload(f.file); imgs.push(r.url); } catch (e) { self.say('사진을 올리지 못했어요'); } } }
+      else if (self.u.postFiles.length && typeof DEMO !== 'undefined' && DEMO.running) imgs = self.u.postFiles.map((f) => f.url);
       else if (self.u.postFiles.length) self.say('이 보기에서는 사진을 올릴 수 없어요 · 글만 올렸어요');
       put('posts/p' + Date.now().toString(36), { text: txt, nick: s.nick || (s.me ? s.me.slice(0, 1) + '**' : '익명'), stage: cur == null ? '' : MILESTONES[cur], topic: self.u.topic === 'live' || self.u.topic === 'all' ? 'all' : self.u.topic, imgs: imgs, likes: 0, replies: 0, createdAt: nowMs() });
       self.setState({ postText: '', postFiles: [], nudge: false });
     };
-    var links = [['clinic', '병원', s.clinic || '아직 없음', '다니는 병원 이름을 알려 주세요.'], ['phone', '병원 전화', s.phone || '아직 없음', '병원 전화번호를 알려 주세요.'], ['meName', '내 이름', s.me || '환자', '배우자 화면에 내 이름은 뭐라고 보일까요?'], ['ptName', '배우자', s.partner || '배우자', '배우자는 뭐라고 부를까요?']]
-      .map((k, i) => ({ t: k[1], v: k[2], ink: INK2, divider: i ? '1px solid ' + LINE : '0', tap: () => self.ask(k[0], k[3]) }));
+    var links = [['hs', '병원', s.clinic || '등록하기', ''], ['hs', '병원 전화', s.phone || '아직 없음', ''], ['meName', '내 이름', s.me || '환자', '배우자 화면에 내 이름은 뭐라고 보일까요?'], ['ptName', '배우자', s.partner || '배우자', '배우자는 뭐라고 부를까요?']]
+      .map((k, i) => ({ t: k[1], v: k[2], ink: k[0] === 'hs' && !s.clinic ? SIGNAL : INK2, divider: i ? '1px solid ' + LINE : '0', tap: () => k[0] === 'hs' ? self.setState({ hs: true, hsQ: '', hsOpen: null }) : self.ask(k[0], k[3]) }));
+    // 병원 등록: search, check details, register. Outside the demo the list is what Fevio has seen on your notices; anything else is entered directly.
+    var dir = (typeof DEMO !== 'undefined' && DEMO.running) ? DEMO_CLINICS : (s.clinic ? [{ name: s.clinic, area: s.region || '', addr: s.clinicAddr || '', phone: s.phone || '', hours: '' }] : []);
+    var q = (u.hsQ || '').replace(/\s/g, '');
+    var hsList = dir.filter((c) => !q || (c.name + c.area).replace(/\s/g, '').indexOf(q) >= 0);
+    var hsResults = hsList.map((c, i) => { var reg = s.clinic === c.name, open = u.hsOpen === c.name;
+      return { name: c.name, sub: [c.area, c.phone].filter(Boolean).join(' · '), av: c.name.slice(0, 1), avBg: reg ? INK : '#7A8BA8', bg: open ? 'rgba(31,91,255,0.04)' : '#FFFFFF', divider: i ? '1px solid ' + LINE : '0', on: reg, open: open,
+        info: [['주소', c.addr], ['전화', c.phone], ['진료', c.hours]].filter((x) => x[1]).map((x) => ({ k: x[0], v: x[1] })),
+        regLabel: reg ? '등록된 병원이에요' : '이 병원으로 등록', tap: () => self.setState({ hsOpen: open ? null : c.name }),
+        reg: () => { if (reg) return; put('settings/main', { clinic: c.name, phone: c.phone, clinicAddr: c.addr, updatedAt: nowMs() }, true); self.setState({ hs: false, hsOpen: null }); self.say(josa(c.name, '을', '를') + ' 등록했어요'); } }; });
     return Object.assign({
       accent: accent, dateLabel: dateLabel, meInitial: meN().slice(0, 1), ptName: ptN(), ptInitial: ptN().slice(0, 1), pMeInitial: ptN().slice(0, 1),
       // curtain
@@ -693,7 +739,7 @@ class App {
       openCurtain: () => self.open(), closeCurtain: () => self.closeCurtain(),
       fevioLabel: tab === 'plan' ? '예약하기' : 'Fevio', fevioAria: tab === 'plan' ? '예약하기 · Fevio 열기' : 'Fevio 열기',
       coName: clinicN() + ' 담당 코디네이터', coSub: s.phone ? '병원 ' + s.phone : '병원 전화번호를 알려 주시면 여기서 바로 봐요', coBg: tint(accent, 0.07),
-      callClinic: () => { if (s.phone) { try { navigator.clipboard.writeText(s.phone); } catch (e) {} self.say(clinicN() + ' ' + s.phone + ' · 번호를 복사했어요'); } else self.say('병원 전화번호가 아직 없어요'); },
+      callClinic: () => { if (s.phone) { try { navigator.clipboard.writeText(s.phone).catch(() => {}); } catch (e) {} self.say(clinicN() + ' ' + s.phone + ' · 번호를 복사했어요'); } else self.say('병원 전화번호가 아직 없어요'); },
       threadEmpty: tEmpty, prompts: prompts, thread: thread, chips: chips, startSym: () => self.startSym(),
       attach: u.attach && tEmpty, showSym: !u.attach, attachInThread: u.attach && !tEmpty,
       toggleAttach: () => self.setState({ attach: !self.u.attach }), plusRot: u.attach ? 45 : 0,
@@ -706,6 +752,10 @@ class App {
       tabTitle: { today: '오늘', plan: '일정', together: '함께' }[tab], tabSub: tab === 'today' ? dateLabel : '', tabs: tabsFor('patient'),
       openSettings: () => self.setState({ settings: true }), closeSettings: () => self.setState({ settings: false }),
       setX: u.settings ? 0 : 104, setHidden: u.settings ? 'false' : 'true',
+      hsX: u.hs ? 0 : 104, hsHidden: u.hs ? 'false' : 'true', hsClose: () => self.setState({ hs: false }), hsQ: u.hsQ || '',
+      hsType: (e) => { self.u.hsQ = e.target.value; self.render(); }, hsResults: hsResults, hsEmpty: hsResults.length === 0,
+      hsEmptyText: q ? '찾는 병원이 없어요. 직접 입력해 주세요.' : '병원 이름이나 동네로 찾아요. 안내문을 넣으면 거기 적힌 병원이 먼저 떠요.',
+      hsManual: () => { self.setState({ hs: false, settings: false }); self.ask('clinic', '다니는 병원 이름을 알려 주세요.'); },
       shareSub: ['공유 꺼짐', '흐름과 다음 일정만 보여요', '흐름과 투약 시각까지 보여요'][s.share],
       shareOpts: ['끔', '흐름만', '흐름+투약'].map((x, i) => ({ t: x, on: i === s.share ? 'true' : 'false', pick: () => put('settings/main', { share: i, updatedAt: nowMs() }, true), bg: i === s.share ? '#FFFFFF' : 'transparent', ink: i === s.share ? INK : INK2, edge: i === s.share ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' })),
       labOn: s.lab ? 'true' : 'false', toggleLab: () => { if (s.share > 0) put('settings/main', { lab: !s.lab, updatedAt: nowMs() }, true); },
@@ -725,8 +775,8 @@ class App {
       planAt: plan && !plan.acked ? hm(plan.at) : '', planShort: plan ? plan.short : '', planCardRows: plan ? planRows(plan.rows) : [],
       planAck: () => { if (plan) put('plans/' + plan.id, { acked: true, ackedAt: nowMs() }, true); },
       // together
-      togSegs: [['road', '커뮤니티'], ['us', '지원']].map((g) => ({ t: g[1], n: '', on: u.togSeg === g[0] ? 'true' : 'false', tap: () => self.setState({ togSeg: g[0] }), bg: u.togSeg === g[0] ? '#FFFFFF' : 'transparent', ink: u.togSeg === g[0] ? INK : INK2, edge: u.togSeg === g[0] ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' })),
-      togUs: u.togSeg === 'us', togRoad: u.togSeg === 'road', support: this.support(), prep: this.prep('patient'),
+      togSegs: [['road', '커뮤니티'], ['us', '정부지원']].map((g) => ({ t: g[1], n: '', on: u.togSeg === g[0] ? 'true' : 'false', tap: () => self.setState({ togSeg: g[0] }), bg: u.togSeg === g[0] ? '#FFFFFF' : 'transparent', ink: u.togSeg === g[0] ? INK : INK2, edge: u.togSeg === g[0] ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' })),
+      togUs: u.togSeg === 'us', togRoad: u.togSeg === 'road', support: this.support('patient'), prep: this.prep('patient'),
       topics: topicsFor('patient'), posts: this.feed('patient'),
       postText: u.postText, postType: (e) => { self.u.postText = e.target.value; var h = !!(e.target.value.trim() || self.u.postFiles.length); if (h !== self.lastPost) { self.lastPost = h; self.render(); } },
       postOff: !postHas, postBg: postHas ? INK : '#F4F4F5', postInk: postHas ? '#FFFFFF' : INK2,
@@ -749,8 +799,8 @@ class App {
       pAckT: plan && plan.acked ? meN() + ' 확인함' : meN() + ' 확인 전', pAckBg: plan && plan.acked ? INK : '#F4F4F5', pAckInk: plan && plan.acked ? '#FFFFFF' : INK2,
       pIsPlan: pTab === 'plan' && shareOn, pIsTogether: pTab === 'together' && shareOn,
       pTopics: topicsFor('partner'), pPosts: this.feed('partner'),
-      pSegs: [['road', '커뮤니티'], ['us', '지원']].map((g) => { var on = u.pSeg === g[0]; return { t: g[1], on: on ? 'true' : 'false', tap: () => self.setState({ pSeg: g[0] }), bg: on ? '#FFFFFF' : 'transparent', ink: on ? INK : INK2, edge: on ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' }; }),
-      pSegUs: u.pSeg === 'us', pSegRoad: u.pSeg === 'road', pSupport: this.support(), pPrep: this.prep('partner'),
+      pSegs: [['road', '커뮤니티'], ['us', '정부지원']].map((g) => { var on = u.pSeg === g[0]; return { t: g[1], on: on ? 'true' : 'false', tap: () => self.setState({ pSeg: g[0] }), bg: on ? '#FFFFFF' : 'transparent', ink: on ? INK : INK2, edge: on ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' }; }),
+      pSegUs: u.pSeg === 'us', pSegRoad: u.pSeg === 'road', pSupport: this.support('partner'), pPrep: this.prep('partner'),
       pHasToast: !!u.pToast, pToast: u.pToast
     }, calP, calMp);
   }

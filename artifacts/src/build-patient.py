@@ -42,6 +42,21 @@ def common(t, role):
         i = t.find(chip, pos)
         if i < 0: break
         j = block(t, i, 'sc-if'); t = t[:j] + ring + t[j:]; pos = j + len(ring)
+    # 정부지원 rows open to steps, papers and actions; official sites are real links
+    row0 = '<div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: {{g.divider}}; opacity: {{g.o}}">'
+    if row0 in t:
+        i = t.index(row0); j = block(t, i, 'div'); inner = t[i + len(row0):j - len('</div>')]
+        new = ('<div onClick="{{g.tap}}" style="cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: {{g.divider}}; opacity: {{g.o}}">' + inner
+               + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; transform: rotate({{g.chev}}deg); transition: transform 200ms ease"><path d="M9 5l7 7-7 7"></path></svg></div>'
+               '\n<sc-if value="{{g.open}}" hint-placeholder-val="{{ false }}"><div class="in" style="padding: 0 14px 14px 60px; display: flex; flex-direction: column; gap: 9px">'
+               '<sc-for list="{{g.steps}}" as="x" hint-placeholder-count="3"><span style="display: flex; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 600; color: #2B2D31"><span class="num" style="width: 18px; height: 18px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: #F4F4F5">{{x.n}}</span>{{x.t}}</span></sc-for>'
+               '<sc-if value="{{g.hasDocs}}" hint-placeholder-val="{{ false }}"><span style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{g.docs}}" as="x" hint-placeholder-count="2"><span style="height: 26px; padding: 0 10px; border-radius: 13px; display: flex; align-items: center; font-size: 12px; font-weight: 700; background: #F4F4F5; color: #575A62">{{x}}</span></sc-for></span></sc-if>'
+               '<sc-if value="{{g.hasActs}}" hint-placeholder-val="{{ false }}"><span style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{g.acts}}" as="a" hint-placeholder-count="2">'
+               '<sc-if value="{{a.hasHref}}" hint-placeholder-val="{{ false }}"><a class="tap" href="{{a.href}}" target="_blank" rel="noopener" style="height: 34px; padding: 0 14px; border-radius: 17px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; text-decoration: none; background: {{a.bg}}; color: {{a.ink}}; box-shadow: {{a.edge}}">{{a.t}}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg></a></sc-if>'
+               '<sc-if value="{{a.noHref}}" hint-placeholder-val="{{ true }}"><button class="tap" onClick="{{a.tap}}" style="height: 34px; padding: 0 14px; border-radius: 17px; font-size: 12px; font-weight: 800; background: {{a.bg}}; color: {{a.ink}}; box-shadow: {{a.edge}}">{{a.t}}</button></sc-if>'
+               '</sc-for></span></sc-if></div></sc-if>')
+        t = t[:i] + new + t[j:]
+    t = t.replace('padding: 8px 4px 0 4px">지원 제도</span>', 'padding: 8px 4px 0 4px">이번 주기에 챙길 지원</span>')
     # one native ad row under the day it fits (values are empty for the partner)
     w0 = t.index('<sc-for list="{{wk.days}}"'); d0 = t.index('<div onClick="{{d.tap}}"', w0); d1 = block(t, d0, 'div')
     t = t[:d1] + ('\n<sc-if value="{{d.hasAd}}" hint-placeholder-val="{{ false }}"><div class="in" style="flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 12px 8px 12px">'
@@ -70,6 +85,25 @@ pat = rep(pat, '<span class="num" style="font-size: 15px; font-weight: 800; colo
   '<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="num" style="font-size: 34px; line-height: 38px; font-weight: 800; letter-spacing: -0.03em">{{doseCount}}</span>'
   '<span style="font-size: 13px; font-weight: 700; color: {{doseLeftInk}}">{{doseLeft}}</span></span></div>')
 pat = rep(pat, 'border-radius: 28px; background: #FFFFFF; box-shadow: inset 0 0 0 2px #1F5BFF;', 'border-radius: 28px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px rgba(31,91,255,0.35);')
+HS = ('<div aria-hidden="{{hsHidden}}" style="position: absolute; inset: 0; z-index: 3; background: #F4F4F5; transform: translateX({{hsX}}%); transition: transform 420ms cubic-bezier(0.32,0.72,0,1); box-shadow: -12px 0 30px rgba(14,15,17,0.10)">'
+  '<div style="position: absolute; left: 0; right: 0; top: 48px; height: 44px; padding: 0 12px; display: flex; align-items: center; gap: 10px">'
+  '<button class="tap" aria-label="뒤로" onClick="{{hsClose}}" style="width: 38px; height: 38px; border-radius: 19px; display: grid; place-items: center; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>'
+  '<span style="font-size: 22px; font-weight: 800">병원 등록</span></div>'
+  '<div class="scroll" style="position: absolute; left: 0; right: 0; top: 100px; bottom: 0; overflow-y: auto; padding: 0 16px 40px 16px; display: flex; flex-direction: column; gap: 10px">'
+  '<label for="f3-hs" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">병원 검색</label>'
+  '<span style="display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; border-radius: 23px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A8D94" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4"></path></svg>'
+  '<input id="f3-hs" value="{{hsQ}}" onChange="{{hsType}}" placeholder="병원 이름이나 동네" autocomplete="off" style="flex: 1; min-width: 0; height: 40px; border: 0; background: transparent; font: inherit; font-size: 15px; color: #0E0F11"></span>'
+  '<div style="border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E4E4E7; overflow: hidden">'
+  '<sc-for list="{{hsResults}}" as="h" hint-placeholder-count="3"><div onClick="{{h.tap}}" style="cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: {{h.divider}}; background: {{h.bg}}">'
+  '<span style="width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: {{h.avBg}}; color: #FFFFFF">{{h.av}}</span>'
+  '<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 800">{{h.name}}</span><span class="num" style="font-size: 12px; font-weight: 600; color: #575A62">{{h.sub}}</span></span>'
+  '<sc-if value="{{h.on}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; border-radius: 11px; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: #0E0F11; color: #FFFFFF">등록됨</span></sc-if></div>'
+  '<sc-if value="{{h.open}}" hint-placeholder-val="{{ false }}"><div class="in" style="padding: 0 14px 14px 60px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #2B2D31"><sc-for list="{{h.info}}" as="x" hint-placeholder-count="3"><span style="display: flex; gap: 8px"><span style="width: 34px; flex: none; color: #8A8D94; font-weight: 700">{{x.k}}</span><span class="num" style="font-weight: 600">{{x.v}}</span></span></sc-for>'
+  '<button class="tap" onClick="{{h.reg}}" style="align-self: flex-start; margin-top: 4px; height: 36px; padding: 0 16px; border-radius: 18px; font-size: 13px; font-weight: 800; background: #0E0F11; color: #FFFFFF">{{h.regLabel}}</button></div></sc-if></sc-for>'
+  '<sc-if value="{{hsEmpty}}" hint-placeholder-val="{{ false }}"><span style="display: block; padding: 14px; font-size: 13px; line-height: 19px; font-weight: 600; color: #8A8D94">{{hsEmptyText}}</span></sc-if></div>'
+  '<button class="tap" onClick="{{hsManual}}" style="align-self: flex-start; height: 34px; padding: 0 4px; font-size: 13px; font-weight: 700; color: #575A62">목록에 없어요 · 직접 입력</button></div></div>')
+a0 = pat.index('<div aria-hidden="{{setHidden}}"'); a1 = block(pat, a0, 'div')
+pat = pat[:a1 - 6] + HS + pat[a1 - 6:]
 pat = rep(pat, '<div style="display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-top: {{k.divider}}">', '<div onClick="{{k.tap}}" style="cursor: pointer; display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-top: {{k.divider}}">')
 # Fevio box takes a multi-line paste
 a = pat.index('<input id="f3ask"'); b = pat.index('>', a) + 1
@@ -140,6 +174,33 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 .alb-t img{width:100%;height:100%;object-fit:cover;object-position:top}
 .alb-desk{display:grid;place-items:center;width:100%;height:100%;background:linear-gradient(160deg,#8C7A66,#5E5044)}
 .alb-desk img{width:78%;height:auto;transform:rotate(-4deg);box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.alb-preview.photo img{width:100%;transform:none;box-shadow:none}
+.ly-sb{position:absolute;left:0;right:0;top:0;height:46px;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;font-size:15px;font-weight:700;color:#0E0F11;pointer-events:none}
+.ly-sb.dark{color:#FFFFFF}
+.ly-sb span:last-child{font-size:10px;letter-spacing:1px}
+.ly-island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:17px;background:#000;z-index:21;pointer-events:none}
+.cam-in:has(.br) .ly-sb span:first-child{visibility:hidden}
+.br-back{top:15px!important;left:26px!important;z-index:25!important}
+.br{position:absolute;inset:0;background:#F2F2F7;transform:scale(.94);opacity:.4;transition:transform 380ms cubic-bezier(.32,.72,0,1),opacity 260ms ease;display:flex;flex-direction:column}
+.cam-layer.on .br{transform:none;opacity:1}
+.br-back{position:absolute;top:16px;left:30px;z-index:3;font-size:12px;font-weight:700;color:#1F5BFF;cursor:pointer;padding:4px 6px}
+.br-page{flex:1;margin-top:52px;background:#fff;position:relative;overflow:hidden}
+.br-progress{position:absolute;left:0;top:0;height:3px;width:0;background:#1F5BFF;transition:width 700ms ease}
+.br.loaded .br-progress{width:100%;opacity:0;transition:width 1200ms ease,opacity 300ms ease 1200ms}
+.br-body{padding:22px 20px;display:flex;flex-direction:column;gap:12px;opacity:0;transform:translateY(8px);transition:opacity 350ms ease 450ms,transform 350ms ease 450ms;color:#1B1C1F}
+.br.loaded .br-body{opacity:1;transform:none}
+.br-kick{font-size:12px;font-weight:700;color:#6B7280}
+.br-body h3{margin:0;font-size:20px;line-height:1.3}
+.br-steps{display:flex;gap:6px;font-size:11px}.br-steps b,.br-steps span{padding:5px 9px;border-radius:12px;background:#EEF0F3;color:#6B7280}.br-steps b{background:#1B1C1F;color:#fff}
+.bf{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;border:1px solid #DADDE3;position:relative}
+.bf span{font-size:11px;color:#6B7280;font-weight:700}.bf b{font-size:14px}
+.bf i{position:absolute;right:10px;top:10px;font-style:normal;font-size:10px;font-weight:800;color:#1F5BFF;background:rgba(31,91,255,.1);padding:2px 6px;border-radius:6px}
+.bf em{position:absolute;right:10px;top:16px;font-style:normal;font-size:11px;font-weight:700;color:#1B1C1F;border:1px solid #DADDE3;border-radius:6px;padding:3px 8px}
+.br-btn{margin-top:4px;height:46px;border-radius:10px;background:#1B1C1F;color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+.br-bar{height:50px;margin:8px 12px 0;border-radius:14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:13px}
+.br-url{display:flex;align-items:center;gap:5px;font-weight:600}
+.br-aa{color:#575A62;font-size:12px}
+.br-tools{height:78px;display:flex;justify-content:space-around;align-items:flex-start;padding-top:12px;font-size:20px;color:#1F5BFF}
 .alb-t.pick{outline:3px solid #1F5BFF;outline-offset:-3px}
 .alb-done{color:#1F5BFF;font-weight:800;text-align:right;cursor:pointer}
 .alb-preview{flex:1;display:grid;place-items:center;background:linear-gradient(160deg,#8C7A66,#5E5044)}

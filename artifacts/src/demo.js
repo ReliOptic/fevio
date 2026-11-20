@@ -24,7 +24,7 @@ function bringIntoView(el) {
   if (!document.body.classList.contains('stacked')) return;
   var phone = el.closest('.frame'); if (phone) phone.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
-async function tap(root, sel, text) {
+async function tap(root, sel, text, noClick) {
   await gate();
   var el = await waitFor(() => find(root, sel, text));
   if (!el) return false;
@@ -32,7 +32,7 @@ async function tap(root, sel, text) {
   var r = el.getBoundingClientRect(), fx = document.createElement('div');
   fx.className = 'tapfx'; fx.style.left = (r.left + r.width / 2 + window.scrollX) + 'px'; fx.style.top = (r.top + r.height / 2 + window.scrollY) + 'px';
   document.body.appendChild(fx); setTimeout(() => fx.remove(), 700);
-  await sleep(240); el.click(); await wait(520);
+  await sleep(240); if (!noClick) el.click(); await wait(520);
   return true;
 }
 async function type(root, sel, text) {
@@ -57,7 +57,7 @@ async function openFevio() { await tap(PT(), 'button[aria-label="Fevio 열기"],
 async function toToday() { if (app.u.tab !== 'today') await goTab('오늘'); app.reanchor(true); await wait(500); }
 
 /* ----- what the demo "photographs": a printed clinic notice and a text-message screenshot (SVG pictures) ----- */
-function svgUrl(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }
+function svgUrl(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg).replace(/[()'!*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()); }
 var FONT = "font-family=\"'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif\"";
 function paperSVG(title, lines, foot) {
   var y = 112, body = lines.map((l) => { var o = '<text x="28" y="' + y + '" font-size="15" fill="#2B2D31" ' + FONT + '>' + escH(l) + '</text>'; y += 30; return o; }).join('');
@@ -76,23 +76,23 @@ function smsSVG(lines) {
     + '<rect x="24" y="96" width="300" height="' + (y - 96) + '" rx="18" fill="#E9E9EB"/>' + bubble + '</svg>');
 }
 var layer = () => document.getElementById('cam-layer');
-function showLayer(html) { var l = layer(); l.innerHTML = '<div class="cam-in">' + html + '</div>'; l.hidden = false; requestAnimationFrame(() => l.classList.add('on')); }
+function showLayer(html, dark) { var l = layer(); l.innerHTML = '<div class="cam-in">' + html + '<div class="ly-sb' + (dark ? ' dark' : '') + '"><span class="num">' + nowHM() + '</span><span>●●● ◔ ▮</span></div><div class="ly-island"></div></div>'; l.hidden = false; requestAnimationFrame(() => l.classList.add('on')); }
 async function hideLayer() { var l = layer(); l.classList.remove('on'); await sleep(320); l.hidden = true; l.innerHTML = ''; }
 async function cameraShot(paperUrl) {
   showLayer('<div class="cam"><div class="cam-top"><span>⚡︎</span><span class="cam-mode">사진</span><span>⌄</span></div>'
     + '<div class="cam-view"><img class="cam-paper" src="' + paperUrl + '" alt="병원 안내문"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><span class="cam-hint">안내문이 화면에 들어오게</span></div>'
-    + '<div class="cam-bottom"><span class="cam-thumb"></span><button type="button" class="shutter" aria-label="찍기"></button><span class="cam-cancel">취소</span></div><div class="cam-flash"></div></div>');
+    + '<div class="cam-bottom"><span class="cam-thumb"></span><button type="button" class="shutter" aria-label="찍기"></button><span class="cam-cancel">취소</span></div><div class="cam-flash"></div></div>', true);
   await wait(900); layer().querySelector('.cam').classList.add('locked'); await wait(900);
   await tap(layer(), '.shutter'); layer().querySelector('.cam').classList.add('flash'); await sleep(260);
   await hideLayer();
 }
 var PHOTO_BG = ['linear-gradient(160deg,#9DB7D5,#E9D8C4)', 'linear-gradient(200deg,#7E9C7A,#D7E3C8)', 'linear-gradient(140deg,#E8C9B8,#B48C7A)', 'linear-gradient(180deg,#F1E3C6,#C7A36B)', 'linear-gradient(120deg,#C6CFDA,#6F7F95)', 'linear-gradient(170deg,#E7D3E0,#A98BA6)', 'linear-gradient(150deg,#D9E6EE,#9FB3BF)', 'linear-gradient(190deg,#EAD9B0,#9E8A5E)', 'linear-gradient(130deg,#C9E0D5,#7FA593)', 'linear-gradient(160deg,#F0D4C8,#C98F7C)', 'linear-gradient(200deg,#D5D9E8,#8790B0)'];
-async function albumPick(shotUrl, label) {
-  var tiles = PHOTO_BG.map((g, i) => i === 1 ? '<button type="button" class="alb-t shot" aria-label="' + label + '"><span class="alb-desk"><img src="' + shotUrl + '" alt=""></span></button>' : '<span class="alb-t" style="background:' + g + '"></span>').join('');
+async function albumPick(shotUrl, label, photo) {
+  var tiles = PHOTO_BG.map((g, i) => i === 1 ? '<button type="button" class="alb-t shot" aria-label="' + label + '">' + (photo ? '<img src="' + shotUrl + '" alt="">' : '<span class="alb-desk"><img src="' + shotUrl + '" alt=""></span>') + '</button>' : '<span class="alb-t" style="background:' + g + '"></span>').join('');
   showLayer('<div class="album"><div class="alb-top"><span class="alb-cancel">취소</span><b>최근 항목</b><span></span></div><div class="alb-grid">' + tiles + '</div></div>');
   await wait(1300); var t = layer().querySelector('.alb-t.shot'); if (t) t.classList.add('pick'); await wait(400);
   await tap(layer(), '.alb-t.shot');
-  showLayer('<div class="album"><div class="alb-top"><span class="alb-cancel">취소</span><b>1장 선택</b><span class="alb-done">추가</span></div><div class="alb-preview"><img src="' + shotUrl + '" alt=""></div></div>');
+  showLayer('<div class="album"><div class="alb-top"><span class="alb-cancel">취소</span><b>1장 선택</b><span class="alb-done">추가</span></div><div class="alb-preview' + (photo ? ' photo' : '') + '"><img src="' + shotUrl + '" alt=""></div></div>');
   await wait(1000); await tap(layer(), '.alb-done'); await hideLayer();
 }
 async function photoFlow(kind, url, lines, meta) {
@@ -103,6 +103,24 @@ async function photoFlow(kind, url, lines, meta) {
   await wait(1700); app.photoResult(lines, meta || {}); await wait(1500);
 }
 
+function pouchSVG() {
+  return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E9DCCB"/><stop offset="1" stop-color="#CBB79F"/></linearGradient></defs>'
+    + '<rect width="400" height="400" fill="url(#g)"/><rect x="70" y="120" width="210" height="150" rx="26" fill="#5B7FD6"/><rect x="70" y="120" width="210" height="44" rx="22" fill="#4A6CC0"/><rect x="160" y="132" width="34" height="20" rx="6" fill="#DDE6FA"/>'
+    + '<g transform="rotate(-18 300 260)"><rect x="230" y="250" width="150" height="20" rx="10" fill="#F4F4F5"/><rect x="340" y="250" width="40" height="20" rx="8" fill="#7A2E8E"/></g>'
+    + '<g transform="rotate(-8 300 300)"><rect x="220" y="292" width="150" height="20" rx="10" fill="#FFFFFF"/><rect x="330" y="292" width="40" height="20" rx="8" fill="#1F5BFF"/></g>'
+    + '<rect x="96" y="300" width="56" height="40" rx="6" fill="#FFFFFF" opacity=".9"/><rect x="104" y="308" width="40" height="6" rx="3" fill="#D4D4D8"/></svg>');
+}
+async function browserHandoff() {
+  var f = (label, val, pasted) => '<div class="bf"><span>' + label + '</span><b>' + escH(val) + '</b>' + (pasted ? '<i>붙여 넣음</i>' : '') + '</div>';
+  showLayer('<div class="br"><div class="br-back">◀ Fevio</div><div class="br-page"><div class="br-progress"></div><div class="br-body">'
+    + '<span class="br-kick">지원 신청</span><h3>난임부부 시술비 지원 신청</h3><div class="br-steps"><b>1 신청 정보</b><span>2 서류</span><span>3 확인</span></div>'
+    + f('신청인', '서연', true) + f('사는 곳', '서울 마포구', true) + f('시술 병원', '서울OO난임센터', true)
+    + '<div class="bf"><span>첨부</span><b>난임진단서</b><em>파일 선택</em></div><div class="br-btn">다음</div></div></div>'
+    + '<div class="br-bar"><span class="br-aa">가가</span><span class="br-url"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0E0F11" stroke-width="2.4" stroke-linecap="round"><path d="M6 11h12v9H6zM9 11V8a3 3 0 016 0v3"/></svg>www.gov.kr</span><span class="br-aa">↻</span></div>'
+    + '<div class="br-tools"><span>‹</span><span>›</span><span>⇪</span><span>▢</span><span>⧉</span></div></div>');
+  await wait(400); layer().querySelector('.br').classList.add('loaded'); await wait(4200);
+  await tap(layer(), '.br-back'); await hideLayer(); await wait(500);
+}
 var SCENES = [
   { t: '1일째 · 시작', run: async () => {
     setClock(1, '09:10'); caption('1일째 · ' + mmdd(1) + ' 09:10', '처음 열면 Fevio가 먼저 말을 걸어요. 오늘 화면에는 IVF 일곱 단계가 이미 놓여 있어요.');
@@ -114,11 +132,16 @@ var SCENES = [
   { t: '1일째 · 안내문 찍기', run: async () => {
     caption('1일째 · ' + mmdd(1) + ' 09:12', '진료 때 받은 안내문을 찍어 둔 사진이 있으면, 갤러리에서 고르기만 하면 돼요. 입력할 건 없어요.');
     var lines = ['주사  고나엘에프 150 · 메노푸어 75', '매일 저녁 21:00', '피검사  ' + mmdd(3) + ' 08:00 채혈실', '초음파  ' + mmdd(5) + ' 08:30 본관 3층', '채취일은 초음파 보고 안내드립니다'];
-    await photoFlow('album', paperSVG('과배란 주사 안내', lines, '문의 02-1234-5678'), ['주사: 고나엘에프 150 · 메노푸어 75 매일 21:00', '피검사: ' + mmdd(3) + ' 08:00 채혈실', '다음 내원: ' + mmdd(5) + ' 08:30 초음파·피검사', '미정: 채취일 — 초음파 보고 안내'], { clinic: '서울OO난임센터', phone: '02-1234-5678' });
+    await photoFlow('album', paperSVG('과배란 주사 안내', lines, '문의 02-1234-5678'), ['주사: 고나엘에프 150 · 메노푸어 75 매일 21:00', '피검사: ' + mmdd(3) + ' 08:00 채혈실', '다음 내원: ' + mmdd(5) + ' 08:30 초음파·피검사', '미정: 채취일 — 초음파 보고 안내'], {});
     caption('1일째 · ' + mmdd(1) + ' 09:13', 'Fevio가 사진에서 날짜와 시간만 골라 보여 줘요. 맞으면 한 번 누르면 끝이에요.');
     await wait(1200); await tap(PT(), null, '맞아요'); await wait(2200); app.reanchor(true); await wait(1200);
-    caption('1일째 · ' + mmdd(1) + ' 09:14', '저장하면 민준 폰에도 같은 흐름이 바로 보여요. 투약까지 보여 줄지는 서연이 정해요.');
-    await tap(PT(), 'button[aria-label="나 · 설정"]'); await wait(400);
+    caption('1일째 · ' + mmdd(1) + ' 09:14', '다니는 병원은 나 화면에서 검색해 등록해요. 등록하면 코디네이터 카드와 몸이 불편할 때 연락처로 쓰여요.');
+    await tap(PT(), 'button[aria-label="나 · 설정"]'); await wait(500);
+    await tap(PT(), 'div[data-on-click]', '등록하기'); await wait(600);
+    await type(PT(), '#f3-hs', '난임'); await wait(900);
+    await tap(PT(), 'div[data-on-click]', '서울OO난임센터'); await wait(1300);
+    await tap(PT(), 'button', '이 병원으로 등록'); await wait(1200);
+    caption('1일째 · ' + mmdd(1) + ' 09:15', '저장한 일정은 민준 폰에도 바로 보여요. 투약까지 보여 줄지는 서연이 정해요.');
     await tap(PT(), 'button[role="radio"]', '흐름+투약'); await wait(800);
     await tap(PT(), 'button[aria-label="뒤로"]'); await wait(800);
   } },
@@ -148,10 +171,30 @@ var SCENES = [
     setClock(3, '21:40'); caption('3일째 · ' + mmdd(3) + ' 21:40', '함께 탭은 커뮤니티가 먼저예요. 같은 단계 사람들 글 사이에 광고가 글 모양 그대로 들어가요.');
     put('posts/demo-a', { text: '주사 맞고 배 더부룩한 거 다들 그랬나요? 저는 3일째부터 그랬어요', nick: '하늘맘', stage: '과배란 주사', topic: 'all', imgs: [], likes: 12, replies: 4, createdAt: nowMs() - 3600e3 });
     put('posts/demo-b', { text: '반차 두 번째인데 팀장님께 뭐라고 하셨어요?', nick: '봄비', stage: '과배란 주사', topic: 'work', imgs: [], likes: 8, replies: 6, createdAt: nowMs() - 1800e3 });
-    await goTab('함께'); await wait(2400);
-    caption('3일째 · ' + mmdd(3) + ' 21:41', '지원 탭에는 지원 제도와 이번 주 준비. 준비 목록에도 제휴 한 줄이 들어가요.');
-    await tap(PT(), 'button[role="tab"]', '지원'); await wait(2200);
-    await tap(PT(), 'button[role="tab"]', '커뮤니티'); await wait(400);
+    await goTab('함께'); await wait(1800);
+    caption('3일째 · ' + mmdd(3) + ' 21:42', '글에 사진도 갤러리에서 바로 넣어요.');
+    var url = pouchSVG();
+    DEMO.pick = () => {};
+    await tap(PT(), 'button[aria-label="사진 넣기"]');
+    await albumPick(url, '주사 파우치 사진', true);
+    var blob = new Blob([decodeURIComponent(url.split(',')[1])], { type: 'image/svg+xml' });
+    app.setState({ postFiles: [{ file: blob, url: url }] }); await wait(600);
+    await type(PT(), '#f3post', '주사 들고 출근하는 날은 이렇게 챙겨요');
+    await tap(PT(), 'button[type="submit"]', '올리기'); await wait(2200);
+  } },
+  { t: '3일째 · 정부지원', run: async () => {
+    caption('3일째 · ' + mmdd(3) + ' 21:45', '정부지원 탭은 이번 주기에 챙길 지원만 보여요. 시술 전에 필요한 건 파랗게 표시돼요.');
+    await tap(PT(), 'button[role="tab"]', '정부지원'); await wait(1400);
+    await tap(PT(), 'div[data-on-click]', '난임부부 시술비 지원'); await wait(1600);
+    caption('3일째 · ' + mmdd(3) + ' 21:46', '신청 정보를 복사해 두고, 휴대폰 브라우저로 정부24 신청 페이지를 열어요. 붙여 넣기만 하면 돼요.');
+    await tap(PT(), 'button', '신청 정보 복사'); await wait(500);
+    await tap(PT(), 'a', '신청 페이지 열기', true);
+    await browserHandoff();
+    caption('3일째 · ' + mmdd(3) + ' 21:48', '돌아오면 신청했다고 표시해 둬요. 회사에 낼 난임치료휴가 글도 일정에서 만들어 줘요.');
+    await tap(PT(), 'button', '신청했어요'); await wait(800);
+    await tap(PT(), 'div[data-on-click]', '난임치료휴가'); await wait(900);
+    await tap(PT(), 'button', '휴가 신청 글 만들기'); await wait(2400);
+    await closeCurtain(); await tap(PT(), 'button[role="tab"]', '커뮤니티'); await wait(300);
   } },
   { t: '5일째 · 병원이 보낸 계획', run: async () => {
     setClock(5, '10:40'); await toToday();
@@ -223,11 +266,11 @@ var SCENES = [
 
 async function demoStart() {
   if (DEMO.running) return;
-  DEMO.real = { D: D, db: db, mem: mem };
+  DEMO.real = { D: D, db: db, mem: mem, assets: assets }; assets = null;   // demo pictures never upload
   DEMO.running = true; DEMO.paused = false; DEMO.stop = false; DEMO.scene = -1; DEMO.start = mondayOf(today0());   // the demo cycle starts on a Monday so each week is full
   db = null; mem = {};
-  D = { ready: true, offline: false, settings: { me: '서연', partner: '민준' }, items: [], rules: [], open: [], plans: [], memos: {}, doses: {}, posts: [], reqs: [], asks: [] };
-  mem = { settings: { main: { me: '서연', partner: '민준' } } };   // the couple already has accounts; everything else starts empty
+  D = { ready: true, offline: false, settings: { me: '서연', partner: '민준', region: '서울 마포구' }, items: [], rules: [], open: [], plans: [], memos: {}, doses: {}, posts: [], reqs: [], asks: [] };
+  mem = { settings: { main: { me: '서연', partner: '민준', region: '서울 마포구' } } };   // the couple already has accounts; everything else starts empty
   resetApp(); setClock(1, '09:10'); app.startOnboarding(); drawBar(); window.scrollTo({ top: 0, behavior: 'smooth' });
   try {
     for (var i = 0; i < SCENES.length; i++) { DEMO.scene = i; drawBar(); await SCENES[i].run(); }
@@ -239,7 +282,7 @@ function resetApp() { var l = document.getElementById('cam-layer'); if (l) { l.h
 function demoEnd() {
   if (!DEMO.real) return;
   DEMO.stop = true; DEMO.running = false; DEMO.paused = false;
-  D = DEMO.real.D; db = DEMO.real.db; mem = DEMO.real.mem; DEMO.real = null; CLOCK.base = null;
+  D = DEMO.real.D; db = DEMO.real.db; mem = DEMO.real.mem; assets = DEMO.real.assets; DEMO.real = null; CLOCK.base = null;
   resetApp(); drawBar();
   if (app.onboarding()) app.startOnboarding(); app.reanchor(false);
 }
