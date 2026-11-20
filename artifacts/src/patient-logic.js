@@ -59,19 +59,22 @@ var MS_OF = { dose: 1, trigger: 2, retrieval: 3, call: 4, transfer: 5, test: 6 }
 var TABS = [['plan', '일정', IC.cal], ['today', '오늘', IC.today], ['together', '함께', IC.people]];
 var AV = ['#7A8BA8', '#A88A7A', '#7AA89A', '#9A7AA8', '#A8A07A', '#7A9AA8'];
 
+/* ===== Clock: real time, or the demo's day when the demo is playing ===== */
+var CLOCK = { base: null, set: 0 };
+var nowMs = () => CLOCK.base == null ? Date.now() : CLOCK.base + (Date.now() - CLOCK.set);
 /* ===== Dates ===== */
 var pad = (n) => String(n).padStart(2, '0');
 var ymd = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 var parseYmd = (s) => { var p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
 var addDays = (d, n) => { var x = new Date(d); x.setDate(x.getDate() + n); return x; };
 var DOW = ['일', '월', '화', '수', '목', '금', '토'];
-var today0 = () => { var d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+var today0 = () => { var d = new Date(nowMs()); d.setHours(0, 0, 0, 0); return d; };
 var TODAY = () => ymd(today0());
 var mondayOf = (d) => { var x = new Date(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); x.setHours(0, 0, 0, 0); return x; };
 var mdl = (s) => { var d = parseYmd(s); return (d.getMonth() + 1) + '.' + d.getDate(); };
 var dmd = (s) => { var d = parseYmd(s); return DOW[d.getDay()] + ' ' + (d.getMonth() + 1) + '.' + d.getDate(); };
 var hm = (ts) => { var d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
-var nowHM = () => { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+var nowHM = () => { var d = new Date(nowMs()); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
 var daysBetween = (a, b) => Math.round((parseYmd(b) - parseYmd(a)) / 864e5);
 
 /* ===== Clinic text → candidates (deterministic; the user confirms before anything is saved) ===== */
@@ -172,10 +175,11 @@ function del(path) {
 }
 function fail(e) { app.say(e && e.code === 'quota_exceeded' ? '저장 공간이 가득 찼어요' : '저장하지 못했어요 · 잠시 뒤 다시 해 주세요'); }
 var COLLS = ['settings', 'items', 'rules', 'open', 'plans', 'memos', 'doses', 'posts', 'reqs', 'asks'];
-function setColl(c, docs) {
-  if (c === 'settings') D.settings = (docs.find((d) => d.id === 'main') || {}).data || {};
-  else if (c === 'memos' || c === 'doses') { var o = {}; docs.forEach((d) => { o[d.id] = d.data; }); D[c] = o; }
-  else D[c] = docs.map((d) => Object.assign({ id: d.id }, d.data));
+function setColl(c, docs, T) {
+  T = T || D;
+  if (c === 'settings') T.settings = (docs.find((d) => d.id === 'main') || {}).data || {};
+  else if (c === 'memos' || c === 'doses') { var o = {}; docs.forEach((d) => { o[d.id] = d.data; }); T[c] = o; }
+  else T[c] = docs.map((d) => Object.assign({ id: d.id }, d.data));
 }
 function applyMem() { COLLS.forEach((c) => setColl(c, Object.entries(mem[c] || {}).map((e) => ({ id: e[0], data: e[1] })))); app.render(); }
 var S = () => Object.assign({ accepted: false, stage: null, share: 1, lab: false, adPers: true, me: '', partner: '', clinic: '', phone: '' }, D.settings);
@@ -260,7 +264,7 @@ class App {
     this.u.curtain = true; this.render();
   }
   accept() {
-    put('settings/main', Object.assign({}, D.settings, { accepted: true, acceptedAt: Date.now(), share: 1, lab: false, adPers: true, updatedAt: Date.now() }));
+    put('settings/main', Object.assign({}, D.settings, { accepted: true, acceptedAt: nowMs(), share: 1, lab: false, adPers: true, updatedAt: nowMs() }));
     this.push([me('동의해요'), fv('지금 어느 단계예요?\n오늘 화면의 길에서 지금 위치를 표시해 드릴게요.')], { conv: 'stage' });
   }
   chipsFor() {
@@ -268,7 +272,7 @@ class App {
     var Q = (label, act, primary) => ({ label: label, act: act, primary: primary });
     if (!s.accepted) return [];
     if (u.conv === 'stage') return STAGE_PICK.map((t, i) => Q(t, () => {
-      put('settings/main', { stage: i, stageAt: TODAY(), updatedAt: Date.now() }, true);
+      put('settings/main', { stage: i, stageAt: TODAY(), updatedAt: nowMs() }, true);
       self.push([me(t), fv('표시했어요.\n다니는 병원 이름을 알려 주세요. 코디네이터 카드에 들어가요.')], { conv: 'clinic' }); self.reanchor(true);
     }));
     if (u.conv === 'clinic' || u.conv === 'phone' || u.conv === 'meName' || u.conv === 'ptName') return [Q('건너뛰기', () => self.answerSetup(''))];
@@ -283,7 +287,7 @@ class App {
   answerSetup(text) {
     var u = this.u, t = text.trim(), next = { clinic: ['phone', '병원 전화번호도 알려 주세요. 코디네이터 카드에서 바로 볼 수 있어요.'], phone: ['meName', '배우자 화면에 내 이름은 뭐라고 보일까요?'], meName: ['ptName', '배우자는 뭐라고 부를까요?'], ptName: ['menu', '이제 병원에서 받은 안내를 그대로 붙여 넣어 주세요.\n날짜·시간별로 나눠서 확인받고 일정에 넣을게요.'] }[u.conv];
     var key = { clinic: 'clinic', phone: 'phone', meName: 'me', ptName: 'partner' }[u.conv];
-    if (t) put('settings/main', { [key]: t.slice(0, 30), updatedAt: Date.now() }, true);
+    if (t) put('settings/main', { [key]: t.slice(0, 30), updatedAt: nowMs() }, true);
     this.push([me(t || '건너뛰기'), fv(next[1])], { conv: next[0], text: '' });
   }
   prompts() {
@@ -309,7 +313,7 @@ class App {
     var list = [];
     if (r) list.push(Q('오늘 주사, 뭘 얼마나 맞아요?', IC.syringe, [card(src, (r.time || '') + ' · ' + (r.title || '주사') + (r.detail ? '\n' + r.detail : ''), '병원 안내에서 저장한 내용이에요', 'clinic')]));
     if (nv2) list.push(Q('다음에 병원 가는 날은요?', IC.cal, [card(src, dmd(nv2.date) + (nv2.time ? ' ' + nv2.time : '') + ' · ' + nv2.title + (nv2.detail ? '\n' + nv2.detail : ''), '병원 안내에서 저장한 일정이에요', 'clinic')]));
-    list.push(Q(proc ? MILESTONES[MS_OF[proc.kind]].split(' ')[0] + '은 언제예요?' : '채취는 언제쯤일까요?', IC.search, [proc ? card(src, dmd(proc.date) + (proc.time ? ' ' + proc.time : '') + ' · ' + proc.title + (proc.detail ? '\n' + proc.detail : ''), '병원 안내에서 저장한 일정이에요', 'clinic') : fv(op ? '아직 정해지지 않았어요.\n' + op.title : '아직 병원 안내에 없어요. 정해지면 붙여 넣어 주세요.')]));
+    list.push(Q(proc ? { trigger: '트리거는', retrieval: '채취는', transfer: '이식은' }[proc.kind] + ' 언제예요?' : '채취는 언제쯤일까요?', IC.search, [proc ? card(src, dmd(proc.date) + (proc.time ? ' ' + proc.time : '') + ' · ' + proc.title + (proc.detail ? '\n' + proc.detail : ''), '병원 안내에서 저장한 일정이에요', 'clinic') : fv(op ? '아직 정해지지 않았어요.\n' + op.title : '아직 병원 안내에 없어요. 정해지면 붙여 넣어 주세요.')]));
     list.push(Q(ptN() + '에게 어떻게 설명하죠?', IC.people, () => [self.shareCard()]));
     return list.slice(0, 4);
   }
@@ -335,8 +339,8 @@ class App {
   draftReq(what, itemId) {
     var s = S(), msg = '[예약 문의] ' + (s.me ? s.me + ' · ' : '') + what + '\n가능한 시간을 알려 주세요.';
     var id = 'q' + Date.now().toString(36);
-    put('reqs/' + id, { t: what, item: itemId || '', status: 'draft', createdAt: Date.now() });
-    this.push([me(what), card(clinicN() + '에 보낼 글', msg, '복사해서 병원 문자·카톡으로 보내 주세요 · 바뀌기 전까지 지금 일정은 그대로예요', 'clinic', [Object.assign(this.copyAct('복사하고 보냄으로 표시', msg), { tap: () => { try { navigator.clipboard.writeText(msg); } catch (e) {} put('reqs/' + id, { status: 'sent', sentAt: Date.now() }, true); this.say('보냄으로 표시했어요 · 병원 답 기다림'); } })])], { conv: 'menu' });
+    put('reqs/' + id, { t: what, item: itemId || '', status: 'draft', createdAt: nowMs() });
+    this.push([me(what), card(clinicN() + '에 보낼 글', msg, '복사해서 병원 문자·카톡으로 보내 주세요 · 바뀌기 전까지 지금 일정은 그대로예요', 'clinic', [Object.assign(this.copyAct('복사하고 보냄으로 표시', msg), { tap: () => { try { navigator.clipboard.writeText(msg); } catch (e) {} put('reqs/' + id, { status: 'sent', sentAt: nowMs() }, true); this.say('보냄으로 표시했어요 · 병원 답 기다림'); } })])], { conv: 'menu' });
   }
   submitText() {
     var u = this.u, t = u.text.trim(); if (!t) return;
@@ -344,7 +348,7 @@ class App {
     var cands = parseClinicText(t, today0()), useful = cands.filter((c) => c.kind !== 'skip');
     if (useful.length && (useful.some((c) => c.date || c.time || c.daily || c.end) || useful.length > 1)) {
       var capId = 'cap' + Date.now().toString(36);
-      put('captures/' + capId, { text: t.slice(0, 4000), status: 'draft', createdAt: Date.now() });   // raw input first; nothing is classified yet
+      put('captures/' + capId, { text: t.slice(0, 4000), status: 'draft', createdAt: nowMs() });   // raw input first; nothing is classified yet
       this.push([me(t), this.readCard(cands)], { conv: 'confirm', cands: cands, capId: capId, text: '' });
       return;
     }
@@ -368,19 +372,21 @@ class App {
     this.push([me('고칠 게 있어요'), fv('줄마다 종류를 골라 주세요. 날짜가 없는 줄은 미정으로 넣어요.')].concat(cardsFor()), { conv: 'fix' });
   }
   saveCands() {
-    var u = this.u, now = Date.now(), n = 0, rows = [], first = null;
+    var u = this.u, now = nowMs(), n = 0, rows = [], itemRows = [], first = null;
     if (!u.cands) return;
     u.cands.forEach((x, i) => {
       if (x.kind === 'skip') return;
       var id = u.capId + '-' + i;
       if (x.kind === 'dose' && x.end) { D.rules.filter((r) => !r.to || r.to > x.date).forEach((r) => put('rules/' + r.id, { to: x.date, updatedAt: now }, true)); rows.push(['그때까지', '주사 · ' + dmd(x.date) + '까지', 'pen', false]); n++; return; }
       var needsDate = !['open'].includes(x.kind) && !x.daily && !x.date;
-      if (x.kind === 'open' || needsDate) { put('open/' + id, { title: (x.kind === 'open' ? x.title : x.line).slice(0, 80), ms: openMs(x.line, currentMs() || 0), done: false, createdAt: now + i }); rows.push(['아직 안 정해짐', (x.kind === 'open' ? x.title : x.line).slice(0, 40), 'q', true]); n++; return; }
-      if (x.kind === 'dose' && x.daily) { put('rules/' + id, { title: '주사', detail: (x.detail || '').slice(0, 60), time: x.time, from: x.date, to: x.to || '', createdAt: now + i }); rows.push(['그때까지', ((x.detail || '주사') + ' · 매일 ' + (x.time || '')).trim(), 'pen', false]); n++; return; }
+      if (x.kind === 'open' || needsDate) { var oms = openMs(x.line, currentMs() || 0); D.open.filter((o) => !o.done && o.ms === oms).forEach((o) => put('open/' + o.id, { done: true, updatedAt: now }, true)); put('open/' + id, { title: (x.kind === 'open' ? x.title : x.line).slice(0, 80), ms: oms, done: false, createdAt: now + i }); rows.push(['아직 안 정해짐', (x.kind === 'open' ? x.title : x.line).slice(0, 40), 'q', true]); n++; return; }
+      if (x.kind === 'dose' && x.daily) { var prevR = ruleFor(x.date || TODAY()), keep = /변경\s*없|그대로/.test(x.detail || '') && prevR && prevR.detail; if (keep) x.detail = prevR.detail; put('rules/' + id, { title: '주사', detail: (x.detail || '').slice(0, 60), time: x.time, from: x.date, to: x.to || '', createdAt: now + i }); rows.push(['그때까지', ((x.detail || '주사') + ' · 매일 ' + (x.time || '')).trim(), 'pen', false]); n++; return; }
+      if (MS_OF[x.kind] != null) D.open.filter((o) => !o.done && o.ms === MS_OF[x.kind]).forEach((o) => put('open/' + o.id, { done: true, updatedAt: now }, true));   // a fixed date closes its 'not decided yet'
       put('items/' + id, { kind: x.kind, date: x.date, time: x.time || '', title: x.title.slice(0, 40), detail: (x.detail || '').slice(0, 60), createdAt: now + i });
       if (!first && x.kind !== 'dose') first = x;
-      rows.unshift([x.kind === 'visit' ? '다음 내원' : KLABEL[x.kind], dmd(x.date) + (x.time ? ' ' + x.time : '') + ' · ' + x.title, 'cal', false]); n++;
+      itemRows.push([x.date + (x.time || ''), [x.kind === 'visit' ? '다음 내원' : KLABEL[x.kind], dmd(x.date) + (x.time ? ' ' + x.time : '') + ' · ' + x.title, 'cal', false]]); n++;
     });
+    rows = itemRows.sort((a, b) => a[0].localeCompare(b[0])).map((r) => r[1]).concat(rows);
     put('captures/' + u.capId, { status: 'confirmed', confirmedAt: now, count: n }, true);
     if (rows.length) put('plans/' + u.capId, { date: TODAY(), at: now, rows: rows.slice(0, 4), short: first ? mdl(first.date) + (first.time ? ' ' + first.time : '') : rows[0][1].slice(0, 12), acked: true, createdAt: now });
     var s = S();
@@ -400,7 +406,7 @@ class App {
     if (cur == null) cur = -1;
     var start = cur >= 0 ? phaseStart(cur) : null;
     var future = (x) => x.date > t || (x.date === t && x.time && x.time >= nowHM());
-    var gateItem = nextOf((x) => ['visit', 'call', 'test'].includes(x.kind));
+    var gateItem = nextOf((x) => ['visit', 'call', 'test'].includes(x.kind) && (MS_OF[x.kind] == null || MS_OF[x.kind] <= cur));
     var self = this;
     MILESTONES.forEach((name, i) => {
       var num = String(i + 1);
@@ -488,7 +494,7 @@ class App {
           memoDraft: u.memoDraft, memoType: (ev2) => { self.u.memoDraft = ev2.target.value; },
           memoShareOn: u.memoShare ? 'true' : 'false', memoShareTrack: u.memoShare ? SIGNAL : '#D4D4D8', memoShareX: u.memoShare ? 16 : 0, memoShareLabel: ptN() + '에게 보이기',
           toggleMemoShare: () => self.setState({ memoShare: !self.u.memoShare }),
-          memoSave: (ev2) => { if (ev2 && ev2.preventDefault) ev2.preventDefault(); var txt = (self.u.memoDraft || '').trim().slice(0, 500); if (txt) put('memos/' + day, { text: txt, shared: self.u.memoShare, updatedAt: Date.now(), seenAt: null }); else del('memos/' + day); self.setState({ memoEdit: null, memoDraft: '' }); },
+          memoSave: (ev2) => { if (ev2 && ev2.preventDefault) ev2.preventDefault(); var txt = (self.u.memoDraft || '').trim().slice(0, 500); if (txt) put('memos/' + day, { text: txt, shared: self.u.memoShare, updatedAt: nowMs(), seenAt: null }); else del('memos/' + day); self.setState({ memoEdit: null, memoDraft: '' }); },
           pMemo: !!showShared, pMemoWho: meN(), pMemoText: showShared ? mm.text : '',
           hasAd: i === adAt && !!ad, adT: ad ? ad.t : '', adS: ad ? ad.s + ' · ' + ad.brand : '', adHide: () => { if (ad) self.hideAd(ad.id); } };
       }) };
@@ -521,7 +527,7 @@ class App {
   markSeen(day, mm) {
     var k = day + ':' + mm.updatedAt;
     if (this.seen.has(k) || mm.seenAt) return; this.seen.add(k);
-    setTimeout(() => put('memos/' + day, { seenAt: Date.now() }, true), 1200);
+    setTimeout(() => put('memos/' + day, { seenAt: nowMs() }, true), 1200);
   }
   hideAd(id) { var h = Object.assign({}, this.u.adsHidden); h[id] = Date.now(); try { localStorage.setItem('fevio.adsHidden', JSON.stringify(h)); } catch (e) {} this.setState({ adsHidden: h }); }
 
@@ -572,8 +578,9 @@ class App {
     var planRows = (rows) => rows.map((r) => ({ k: r[0], v: r[1], icon: { cal: IC.cal, pen: IC.syringe, q: IC.q }[r[2]] || IC.cal, cls: r[3] ? 'hatch' : '', bg: r[3] ? 'transparent' : '#F4F4F5', ink: r[3] ? SIGNAL : INK }));
     // dose screen: from 30 min before to 90 min after a dose that is not recorded yet
     var rule = ruleFor(t), dk = rule ? doseKey(t, rule.id) : null, doneDose = dk && D.doses[dk];
-    var mins = rule && rule.time ? (+rule.time.slice(0, 2) * 60 + +rule.time.slice(3)) - (new Date().getHours() * 60 + new Date().getMinutes()) : null;
-    var isDoseNow = tab === 'today' && rule && mins != null && mins <= 30 && mins >= -90 && !doneDose;
+    var mins = rule && rule.time ? (+rule.time.slice(0, 2) * 60 + +rule.time.slice(3)) - (new Date(nowMs()).getHours() * 60 + new Date(nowMs()).getMinutes()) : null;
+    var trigToday = D.items.some((x) => x.kind === 'trigger' && x.date === t);
+    var isDoseNow = tab === 'today' && rule && !trigToday && mins != null && mins <= 30 && mins >= -90 && !doneDose;
     var doseItems = rule ? (rule.detail || '').split(/\s*[·,]\s*/).filter(Boolean).map((p, i) => { var m = p.match(/^(.*?)\s*([\d.]+\s*(IU|iu|mg|ml|단위|개)?)$/); return { name: m ? (m[1] || ('주사 ' + (i + 1))) : p, form: '', dose: m ? m[2] : '', icon: i % 2 ? VIAL : PEN }; }) : [];
     // curtain
     var prompts = this.prompts().map((p) => ({ t: p.t, act: p.act, icon: p.icon }));
@@ -598,6 +605,7 @@ class App {
     var curH = u.curtain ? (tEmpty ? curFit : 548) : 0;
     if (u.curtain && tEmpty && this.fitKey !== fitKey) { this.fitKey = fitKey; setTimeout(() => self.measureFit('f3-cur', 'f3-thread', 'f3-cur-empty', 'fit', fitKey), 40); }
     // calendars
+    var curWkI = this.weekIndex(t); this.wkExpect = { 'f3-weeks': u.wk == null ? curWkI : u.wk, 'f3-pweeks': u.pWk == null ? curWkI : u.pWk };
     var calP = this.buildCal({ patient: true, mode: u.calMode, wk: u.wk, sel: u.sel, weeksId: 'f3-weeks',
       set: (p) => { var q = {}; if ('mode' in p) { q.calMode = p.mode; q.pCalMode = p.mode; } if ('wk' in p) { q.wk = p.wk; q.pWk = p.wk; } if ('sel' in p) { q.sel = p.sel; q.pSel = p.sel; q.memoEdit = null; } self.setState(q); if ('wk' in p) setTimeout(() => self.weeksTo(p.wk, true, 'f3-pweeks'), 30); } });
     var calM = this.buildCal({ patient: false, mode: u.pCalMode, wk: u.pWk, sel: u.pSel, weeksId: 'f3-pweeks',
@@ -614,7 +622,7 @@ class App {
       pAsk('오늘 ' + meN() + ' 님 일정은?', () => { var l = eventsOn(t).filter((e) => e.k !== 'dose' || s.share >= 2); return [l.length ? card('오늘', l.map((e) => (e.time || '') + ' ' + e.t).join('\n'), meN() + ' 님이 공유한 범위', 'clinic') : fv('오늘은 공유된 병원 일정이 없어요.')]; }),
       pAsk('다음에 정해지는 건?', () => { var op = D.open.filter((x) => !x.done)[0]; return [fv(op ? op.title : (nvP ? '다음 일정은 ' + dmd(nvP.date) + ' ' + nvP.title + '이에요.' : '아직 공유된 일정이 없어요.'))]; }),
       pAsk('내가 챙길 건?', () => { var p = D.items.filter((x) => x.date >= t && /보호자|동반|함께|배우자|정액/.test(x.detail + x.title))[0]; return [fv(p ? dmd(p.date) + ' ' + p.title + '\n' + p.detail : '병원 안내에 ' + ptN() + ' 님이 챙길 건 아직 없어요.')]; })
-    ]).concat([pAsk(meN() + '에게 물어보기', () => { put('asks/a' + Date.now().toString(36), { q: '질문이 있어요', createdAt: Date.now() }); if (!db) self.say(ptN() + ' 님이 질문을 보냈어요'); return [fv(meN() + ' 님께 보낼게요.\n병원에는 따로 보내지 않아요.')]; })]);
+    ]).concat([pAsk(meN() + '에게 물어보기', () => { put('asks/a' + Date.now().toString(36), { q: '질문이 있어요', createdAt: nowMs() }); if (!db) self.say(ptN() + ' 님이 질문을 보냈어요'); return [fv(meN() + ' 님께 보낼게요.\n병원에는 따로 보내지 않아요.')]; })]);
     var pThreadV = (u.pThread || []).map((m) => { var c = m.card, mine2 = m.from === 'u'; return { align: mine2 ? 'flex-end' : 'flex-start', hasText: !!m.text, text: m.text || '', radius: mine2 ? '18px 18px 6px 18px' : '18px 18px 18px 6px', bg: mine2 ? INK : '#F4F4F5', ink: mine2 ? '#FFFFFF' : INK, hasCard: !!c, kicker: c ? c.kicker : '', body: c ? c.body : '', foot: c ? c.foot : '', edge: c ? accent : INK }; });
     var pEmpty = !(u.pThread || []).length;
     var pFitKey = [u.pTab, s.share, pPromptList.length].join('|');
@@ -634,7 +642,7 @@ class App {
       var txt = self.u.postText.trim().slice(0, 1000), imgs = [];
       if (self.u.postFiles.length && assets) { for (var f of self.u.postFiles.slice(0, 4)) { try { var r = await assets.upload(f.file); imgs.push(r.url); } catch (e) { self.say('사진을 올리지 못했어요'); } } }
       else if (self.u.postFiles.length) self.say('이 보기에서는 사진을 올릴 수 없어요 · 글만 올렸어요');
-      put('posts/p' + Date.now().toString(36), { text: txt, nick: s.nick || (s.me ? s.me.slice(0, 1) + '**' : '익명'), stage: cur == null ? '' : MILESTONES[cur], topic: self.u.topic === 'live' || self.u.topic === 'all' ? 'all' : self.u.topic, imgs: imgs, likes: 0, replies: 0, createdAt: Date.now() });
+      put('posts/p' + Date.now().toString(36), { text: txt, nick: s.nick || (s.me ? s.me.slice(0, 1) + '**' : '익명'), stage: cur == null ? '' : MILESTONES[cur], topic: self.u.topic === 'live' || self.u.topic === 'all' ? 'all' : self.u.topic, imgs: imgs, likes: 0, replies: 0, createdAt: nowMs() });
       self.setState({ postText: '', postFiles: [], nudge: false });
     };
     var links = [{ t: '병원', v: s.clinic || '아직 없음' }, { t: '병원 전화', v: s.phone || '아직 없음' }, { t: '내 이름', v: s.me || '환자' }, { t: '배우자', v: s.partner || '배우자' }].map((k, i) => ({ t: k.t, v: k.v, ink: INK2, divider: i ? '1px solid ' + LINE : '0' }));
@@ -659,15 +667,15 @@ class App {
       openSettings: () => self.setState({ settings: true }), closeSettings: () => self.setState({ settings: false }),
       setX: u.settings ? 0 : 104, setHidden: u.settings ? 'false' : 'true',
       shareSub: ['공유 꺼짐', '흐름과 다음 일정만 보여요', '흐름과 투약 시각까지 보여요'][s.share],
-      shareOpts: ['끔', '흐름만', '흐름+투약'].map((x, i) => ({ t: x, on: i === s.share ? 'true' : 'false', pick: () => put('settings/main', { share: i, updatedAt: Date.now() }, true), bg: i === s.share ? '#FFFFFF' : 'transparent', ink: i === s.share ? INK : INK2, edge: i === s.share ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' })),
-      labOn: s.lab ? 'true' : 'false', toggleLab: () => { if (s.share > 0) put('settings/main', { lab: !s.lab, updatedAt: Date.now() }, true); },
+      shareOpts: ['끔', '흐름만', '흐름+투약'].map((x, i) => ({ t: x, on: i === s.share ? 'true' : 'false', pick: () => put('settings/main', { share: i, updatedAt: nowMs() }, true), bg: i === s.share ? '#FFFFFF' : 'transparent', ink: i === s.share ? INK : INK2, edge: i === s.share ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' })),
+      labOn: s.lab ? 'true' : 'false', toggleLab: () => { if (s.share > 0) put('settings/main', { lab: !s.lab, updatedAt: nowMs() }, true); },
       labTrack: s.lab && s.share > 0 ? INK : '#D4D4D8', labX: s.lab && s.share > 0 ? 16 : 0, labO: s.share > 0 ? 1 : 0.4,
-      adPersStr: s.adPers ? 'true' : 'false', toggleAdPers: () => put('settings/main', { adPers: !s.adPers, updatedAt: Date.now() }, true), adPersTrack: s.adPers ? INK : '#D4D4D8', adPersX: s.adPers ? 16 : 0,
+      adPersStr: s.adPers ? 'true' : 'false', toggleAdPers: () => put('settings/main', { adPers: !s.adPers, updatedAt: nowMs() }, true), adPersTrack: s.adPers ? INK : '#D4D4D8', adPersX: s.adPers ? 16 : 0,
       links: links,
       // today
       isDose: !!isDoseNow, isFlow: tab === 'today' && !isDoseNow, isPlan: tab === 'plan', isTogether: tab === 'together',
       doseNote: (cur != null ? MILESTONES[cur] : '') + ' · ' + clinicN() + ' 안내', doseTime: rule ? rule.time : '', doseLeft: mins == null ? '' : (mins > 0 ? mins + '분 남음' : (mins === 0 ? '지금' : -mins + '분 지남')) + ' · 병원이 정한 시각',
-      doseItems: doseItems, doseDone: () => { put('doses/' + dk, { at: Date.now(), createdAt: Date.now() }); self.say('기록했어요' + (s.share >= 2 ? ' · ' + ptN() + ' 님 화면에도 보여요' : '')); },
+      doseItems: doseItems, doseDone: () => { put('doses/' + dk, { at: nowMs(), createdAt: nowMs() }); self.say('기록했어요' + (s.share >= 2 ? ' · ' + ptN() + ' 님 화면에도 보여요' : '')); },
       doseLabel: '맞았어요', doseBg: INK, doseInk: '#FFFFFF',
       hasNews: false, news: '', newsTime: '', tlTop: 92,
       flow: tl.after, flowPast: tl.before, planAnchor: '', planLine: tl.line,
@@ -675,7 +683,7 @@ class App {
       showNowBtn: tab === 'today' && u.away && !u.curtain && !u.settings, toNow: () => self.anchor(true),
       hasPlan: tab === 'today' && !!plan, planOpen: !!plan && !plan.acked, planClosed: !!plan && !!plan.acked,
       planAt: plan && !plan.acked ? hm(plan.at) : '', planShort: plan ? plan.short : '', planCardRows: plan ? planRows(plan.rows) : [],
-      planAck: () => { if (plan) put('plans/' + plan.id, { acked: true, ackedAt: Date.now() }, true); },
+      planAck: () => { if (plan) put('plans/' + plan.id, { acked: true, ackedAt: nowMs() }, true); },
       // together
       togSegs: [['road', '커뮤니티'], ['us', '지원']].map((g) => ({ t: g[1], n: '', on: u.togSeg === g[0] ? 'true' : 'false', tap: () => self.setState({ togSeg: g[0] }), bg: u.togSeg === g[0] ? '#FFFFFF' : 'transparent', ink: u.togSeg === g[0] ? INK : INK2, edge: u.togSeg === g[0] ? '0 1px 3px rgba(14,15,17,0.12)' : 'none' })),
       togUs: u.togSeg === 'us', togRoad: u.togSeg === 'road', support: this.support(), prep: this.prep('patient'),
@@ -716,5 +724,5 @@ class App {
   }
   render() { scheduleRender(); }
 }
-function rel(ts) { var s = Math.max(0, (Date.now() - ts) / 1000); if (s < 60) return '방금'; if (s < 3600) return Math.floor(s / 60) + '분 전'; if (s < 86400) return Math.floor(s / 3600) + '시간 전'; return mdl(ymd(new Date(ts))); }
+function rel(ts) { var s = Math.max(0, (nowMs() - ts) / 1000); if (s < 60) return '방금'; if (s < 3600) return Math.floor(s / 60) + '분 전'; if (s < 86400) return Math.floor(s / 3600) + '시간 전'; return mdl(ymd(new Date(ts))); }
 var wide = () => true;

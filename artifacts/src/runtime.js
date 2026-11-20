@@ -39,6 +39,14 @@ function doRender() {
   } };
   morphdom(document.getElementById('ph-patient'), '<div>' + expand(TPL_PATIENT, {}) + '</div>', opts);
   morphdom(document.getElementById('ph-partner'), '<div>' + expand(TPL_PARTNER, {}) + '</div>', opts);
+  syncWeeks();
+}
+// Keep each week strip on its selected week after updates, unless it is being swiped right now.
+var lastSwipe = 0;
+document.addEventListener('scroll', (e) => { if (e.target && (e.target.id === 'f3-weeks' || e.target.id === 'f3-pweeks')) lastSwipe = Date.now(); }, true);
+function syncWeeks() {
+  if (Date.now() - lastSwipe < 600 || !app.wkExpect) return;
+  Object.keys(app.wkExpect).forEach((id) => { var el = document.getElementById(id); if (!el || !el.clientWidth) return; var want = app.wkExpect[id] * el.clientWidth; if (Math.abs(el.scrollLeft - want) > el.clientWidth / 2) el.scrollLeft = want; });
 }
 function fire(el, kind, e) { var id = el && el.getAttribute('data-on-' + kind); if (id != null && H[+id]) H[+id](e); }
 document.addEventListener('click', (e) => { var el = e.target.closest('[data-on-click]'); if (el && !el.disabled) fire(el, 'click', e); });
@@ -78,7 +86,9 @@ setInterval(() => { if (!document.hidden) scheduleRender(); }, 30000);
   if (!db) { D.offline = true; applyMem(); boot(); return; }
   var pending = new Set(COLLS), lastAsk = null;
   COLLS.forEach((c) => db.collection(c).onSnapshot((snap) => {
-    setColl(c, snap.docs.map((d) => ({ id: d.id, data: d.data() || {} })));
+    // while the demo plays, real records keep arriving into the set-aside store
+    setColl(c, snap.docs.map((d) => ({ id: d.id, data: d.data() || {} })), DEMO.running ? DEMO.real.D : D);
+    if (DEMO.running) return;
     if (c === 'asks' && D.asks.length) { var a = D.asks.slice().sort((x, y) => y.createdAt - x.createdAt)[0]; if (lastAsk && a.id !== lastAsk && Date.now() - a.createdAt < 10000) app.say(ptN() + ' 님이 질문을 보냈어요'); lastAsk = a.id; }
     pending.delete(c); if (!pending.size) boot();
     app.render();

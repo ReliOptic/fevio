@@ -76,7 +76,7 @@ page_css = '''
 :root[data-theme="dark"]{--page:#111214;--cap:#A1A4AB;color-scheme:dark}
 html,body{height:100%}
 body{margin:0;background:var(--page)}
-.stage{min-height:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding-block:28px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.stage{min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding-block:28px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .phones{display:flex;gap:56px;align-items:flex-start;justify-content:center}
 body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 .slot{display:flex;flex-direction:column;align-items:center;gap:14px}
@@ -96,10 +96,28 @@ body.stacked .phones{flex-direction:column;align-items:center;gap:28px}
 .cap b{font-weight:800}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 #f3ask{font-family:inherit}
+.demo-bar{width:min(100%,840px);box-sizing:border-box}
+.demo-bar.idle{display:flex;justify-content:center}
+.q .demo-start{height:44px;padding:0 20px;border-radius:22px;border:0;cursor:pointer;background:#0E0F11;color:#FFFFFF;font:800 15px/1 'Pretendard',-apple-system,system-ui,sans-serif;display:inline-flex;align-items:center;gap:9px;box-shadow:0 8px 20px rgba(14,15,17,.18)}
+.q .demo-start .dot{width:8px;height:8px;border-radius:4px;background:#1F5BFF}
+.demo-bar.on{position:sticky;top:calc(8px + env(safe-area-inset-top,0px));z-index:30;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:20px;padding:12px 16px;box-shadow:0 0 0 1px rgba(14,15,17,.06),0 10px 30px rgba(14,15,17,.12);color:#0E0F11;font-family:'Pretendard',-apple-system,system-ui,sans-serif}
+.demo-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.demo-day{font-size:15px;font-weight:800;white-space:nowrap}
+.demo-steps{display:flex;gap:4px;flex:1;min-width:110px}
+.demo-steps i{flex:1;height:4px;border-radius:2px;background:#E4E4E7}
+.demo-steps i.d{background:#0E0F11}
+.demo-steps i.c{background:#1F5BFF}
+.demo-ctl{display:flex;gap:6px}
+.demo-ctl button{height:32px;padding:0 12px;border-radius:16px;border:0;cursor:pointer;background:#F4F4F5;color:#0E0F11;font:700 13px/1 'Pretendard',-apple-system,system-ui,sans-serif}
+.demo-ctl button:focus-visible,.demo-start:focus-visible{outline:2px solid #1F5BFF;outline-offset:2px}
+.demo-cap{margin:8px 0 0 0;font-size:15px;line-height:1.5;font-weight:600;color:#2B2D31;text-wrap:balance}
+.tapfx{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(31,91,255,.35);box-shadow:0 0 0 2px rgba(31,91,255,.5);pointer-events:none;z-index:100;animation:tapfx .7s ease-out forwards}
+@keyframes tapfx{0%{transform:scale(.45);opacity:1}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.tapfx{animation:none;opacity:.6}}
 '''
 logic = open(D + 'apps/logic.js').read(); runtime = open(D + 'apps/runtime.js').read()
 html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<style>' + css + page_css + '</style>\n'
-        '<main class="stage q"><div class="phones">'
+        '<main class="stage q"><div class="demo-bar idle" id="demo-bar"></div><div class="phones">'
         '<section class="slot" aria-label="환자 아이폰"><div class="frame" id="ph-patient"></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
         '<section class="slot" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
         '</div></main>\n'
@@ -107,6 +125,6 @@ html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides"
         '<input id="file-album" class="sr" type="file" accept="image/*" aria-label="앨범에서 고르기">'
         '<input id="file-post" class="sr" type="file" accept="image/*" multiple aria-label="글에 넣을 사진">\n'
         '<script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js"></script>\n'
-        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n</script>\n')
+        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/demo.js').read() + '\n</script>\n')
 open(D + 'apps/fevio-app.html', 'w').write(html)
 print('bytes', len(html.encode()))
