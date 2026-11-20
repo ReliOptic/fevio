@@ -261,15 +261,6 @@ body.demo-stage .slot .cap{display:none}
 @media (prefers-reduced-motion:reduce){.tapfx{animation:none;opacity:.6}}
 
 
-.pair{display:none}
-body.demo-stage .pair{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 12px;position:absolute;left:0;right:0;bottom:14px;margin:0 auto;width:fit-content;max-width:92%;box-sizing:border-box;padding:7px 16px;border-radius:999px;background:#FBF8F1;box-shadow:inset 0 0 0 1px rgba(168,135,90,.5);font:500 15px/1.35 var(--serif);color:#1C1A17;opacity:0;transform:translateY(4px);transition:opacity 360ms ease,transform 360ms ease;z-index:8;text-align:center}
-body.demo-stage .pair.on{opacity:1;transform:none}
-.pair b{font-weight:700;margin-right:6px}
-.pair .pp-p b{color:#1F5BFF}.pair .pp-c b{color:#8A6A3C}
-.pair i{font-style:normal;color:#A8875A}
-.pair.pain .pp-p b,.pair.pain .pp-c b{color:#C4473A}
-body.demo-stage .subtitle{bottom:58px}
-@media (max-width:759px){body.demo-stage .pair{font-size:12.5px;padding:6px 12px;border-radius:14px;bottom:10px;max-width:calc(100% - 20px)}body.demo-stage .subtitle{bottom:66px}}
 /* ---- classic shell: ivory paper, serif type, gold hairlines ---- */
 :root{--page:#F3EFE7;--ink:#1C1A17;--gold:#A8875A;--paper:#FBF8F1;--serif:'Noto Serif KR','Nanum Myeongjo','Apple SD Gothic Neo',serif}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#1A1814;--paper:#24211B;--ink:#F3EFE7}}
@@ -307,11 +298,11 @@ html = ('<title>Fevio 환자 앱</title>\n<meta name="claude:viewport-fit-sides"
         '<main class="stage q"><div class="demo-bar idle" id="demo-bar"></div><div class="phones">'
         '<section class="slot" data-who="pt" aria-label="환자 아이폰"><div class="frame-wrap"><div class="frame" id="ph-patient"></div><div class="cam-layer" id="cam-layer" hidden></div></div><span class="cap" id="cap-patient"><b>환자</b></span></section>'
         '<section class="slot" data-who="pr" aria-label="배우자 아이폰"><div class="frame" id="ph-partner"></div><span class="cap" id="cap-partner"><b>배우자</b> · 같은 앱, 공유받은 것만</span></section>'
-        '<div class="illo" id="illo"></div><div class="subtitle" id="subtitle" aria-live="polite"></div><div class="pair" id="pair" aria-live="polite"></div></div></main>\n'
+        '<div class="illo" id="illo"></div><div class="subtitle" id="subtitle" aria-live="polite"></div></div></main>\n'
         '<input id="file-camera" class="sr" type="file" accept="image/*" capture="environment" aria-label="사진 찍기">'
         '<input id="file-album" class="sr" type="file" accept="image/*" aria-label="앨범에서 고르기">'
         '<input id="file-post" class="sr" type="file" accept="image/*" multiple aria-label="글에 넣을 사진">\n'
         '<script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js"></script>\n'
-        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/stage.js').read() + '\n' + open(D + 'apps/score.js').read() + '\n' + open(D + 'apps/demo.js').read() + '\n' + open(D + 'apps/clinic_reel.js').read() + '\n</script>\n')
+        '<script>\n' + logic + '\nvar TPL_PATIENT = ' + json.dumps(pat, ensure_ascii=False) + ';\nvar TPL_PARTNER = ' + json.dumps(par, ensure_ascii=False) + ';\n' + runtime + '\n' + open(D + 'apps/stage.js').read() + '\n' + open(D + 'apps/demo.js').read() + '\n' + open(D + 'apps/clinic_reel.js').read() + '\n</script>\n')
 open(D + 'apps/fevio-app.html', 'w').write(html)
 print('bytes', len(html.encode()))

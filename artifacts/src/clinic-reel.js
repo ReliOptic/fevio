@@ -145,7 +145,7 @@ var CLINIC_SCENES = [
     caption('병원 편', ''); seedClinicReel(); setClock(3, '09:00');
     await stage('illo', 'titleClinic'); await wait(3400);
   } },
-  { t: '늘어나는 수요', m: 'open', run: async () => {
+  { t: '늘어나는 수요', run: async () => {
     caption('병원 편 · 수요', '난임 시술은 2023년 20만 3천 건으로, 2019년보다 39% 늘었어요. 같은 인력으로 더 많은 주기를 돌려야 해요.');
     await stage('illo', 'cDemand'); await wait(7000);
   } },
@@ -154,50 +154,50 @@ var CLINIC_SCENES = [
     await stage('illo', 'cFlow'); await wait(7600);
   } },
   { t: '변동성', run: async () => {
-    caption('병원 편 · 변동성', '채취 날은 난포 반응을 보고 정해서 미리 알기 어려워요. 한 센터에서는 주말 채취 부담이 평일의 두 배를 넘었어요.'); pair('채취 날을 늦게 알아 일과 조율이 어려워요', '주말에 채취와 배양이 몰려요', true);
+    caption('병원 편 · 변동성', '채취 날은 난포 반응을 보고 정해서 미리 알기 어려워요. 한 센터에서는 주말 채취 부담이 평일의 두 배를 넘었어요.');
     await stage('illo', 'cWeekend'); await wait(7600);
   } },
   { t: '정보 지연', run: async () => {
-    caption('병원 편 · 정보 지연', '진료 뒤 안내가 전화와 문자로 흩어지면, 작은 오해가 되묻는 전화와 일정 재조정으로 커져요. 공급망의 채찍 효과예요.'); pair('헷갈리면 다시 전화해야 해요', '되묻는 전화가 쌓여요', true);
+    caption('병원 편 · 정보 지연', '진료 뒤 안내가 전화와 문자로 흩어지면, 작은 오해가 되묻는 전화와 일정 재조정으로 커져요. 공급망의 채찍 효과예요.');
     await stage('illo', 'cBullwhip'); await wait(7600);
   } },
   { t: '현장의 부담', run: async () => {
-    caption('병원 편 · 현장', '환자는 용량과 시간을 헷갈리고, 의료진은 같은 확인에 시간을 써요.'); pair('용량과 시간이 불안해요', '같은 확인에 시간을 써요', true);
+    caption('병원 편 · 현장', '환자는 용량과 시간을 헷갈리고, 의료진은 같은 확인에 시간을 써요.');
     await stage('illo', 'cLoad'); await wait(7600);
   } },
-  { t: '한 장의 기록', m: 'calm', run: async () => {
+  { t: '한 장의 기록', run: async () => {
     setClock(3, '11:30'); app.render(); await stage('illo-phone', 'cSource'); await toToday();
-    caption('병원 편 · Fevio', '환자가 안내문을 찍고 날짜와 시간을 직접 확인해요. 그 카드 하나를 환자, 배우자, 병원이 같이 봐요.'); pair('다시 묻지 않아도 돼요', '같은 안내를 다시 하지 않아요'); await wait(3600);
+    caption('병원 편 · Fevio', '환자가 안내문을 찍고 날짜와 시간을 직접 확인해요. 그 카드 하나를 환자, 배우자, 병원이 같이 봐요.'); await wait(3600);
     app.receivePlan('다음 내원: ' + mmdd(5) + ' 08:30 초음파·피검사\n주사: 변경 없음 · 매일 21:00');
-    caption('병원 편 · Fevio', '진료 뒤 계획은 카드로 한 번에 가요. 환자가 확인을 누르면 병원 콘솔에 바로 표시돼요.'); pair('확인만 누르면 돼요', '누가 확인했는지 바로 보여요'); await wait(2400);
+    caption('병원 편 · Fevio', '진료 뒤 계획은 카드로 한 번에 가요. 환자가 확인을 누르면 병원 콘솔에 바로 표시돼요.'); await wait(2400);
     await tap(PT(), null, '확인했어요'); await wait(1800);
   } },
   { t: '정시 투약', run: async () => {
     setClock(3, '20:56'); app.render(); await stage('illo-phone', 'cOnTime');
-    caption('병원 편 · 정시', '주사와 트리거 시각이 다가오면 차분한 카운트다운이 뜨고, 맞은 뒤 한 번 눌러 기록해요.'); pair('시간을 세며 불안해하지 않아요', '투약 기록이 남아요'); await wait(3200);
+    caption('병원 편 · 정시', '주사와 트리거 시각이 다가오면 차분한 카운트다운이 뜨고, 맞은 뒤 한 번 눌러 기록해요.'); await wait(3200);
     await tap(PT(), null, '맞았어요'); app.reanchor(true); await wait(2200);
   } },
   { t: '예외 관리', run: async () => {
-    caption('병원 편 · 예외', '마감까지 확인하지 않은 사람, 일정 변경 요청, 몸이 불편하다는 알림만 올라와요. 모두에게 전화하지 않고 예외만 다뤄요.'); pair('급할 때 바로 연결돼요', '예외만 다뤄요');
+    caption('병원 편 · 예외', '마감까지 확인하지 않은 사람, 일정 변경 요청, 몸이 불편하다는 알림만 올라와요. 모두에게 전화하지 않고 예외만 다뤄요.');
     await stage('illo', 'cExceptions'); await wait(8000);
   } },
   { t: '부하 예측', run: async () => {
-    caption('병원 편 · 예측', '과배란 며칠째인 환자가 몇 명인지 보이면, 2~3일 뒤 채취와 배양 부하를 가늠해 주말 인력을 미리 정할 수 있어요.'); pair('바뀐 일정을 바로 받아요', '주말 인력을 미리 정해요');
+    caption('병원 편 · 예측', '과배란 며칠째인 환자가 몇 명인지 보이면, 2~3일 뒤 채취와 배양 부하를 가늠해 주말 인력을 미리 정할 수 있어요.');
     await stage('illo', 'cForecast'); await wait(8000);
   } },
-  { t: '수율', m: 'lift', run: async () => {
-    caption('병원 편 · 수율', '치료를 그만두는 이유 중 부담과 조직·병원 문제가 39%예요. 둘이 같은 화면을 보고 안내가 분명하면 이 몫을 덜 수 있어요.'); pair('둘이 같이 버틸 수 있어요', '주기가 이어져요');
+  { t: '수율', run: async () => {
+    caption('병원 편 · 수율', '치료를 그만두는 이유 중 부담과 조직·병원 문제가 39%예요. 둘이 같은 화면을 보고 안내가 분명하면 이 몫을 덜 수 있어요.');
     await stage('illo', 'cYield'); await wait(8000);
   } },
-  { t: '양쪽의 불편', m: 'lift', run: async () => {
+  { t: '양쪽의 불편', run: async () => {
     caption('병원 편 · 플랫폼', '환자가 한 번 누르는 행동이 병원의 전화 한 통, 확인 한 번을 같이 지워요. 한쪽만 편해지는 게 아니에요.');
     await stage('illo', 'cMatch'); await wait(9000);
   } },
   { t: '센터의 이익', run: async () => {
-    caption('병원 편 · 결과', '확인 업무가 줄고 부하가 미리 보이면, 같은 인력과 시술실로 더 많은 주기를 차분하게 돌릴 수 있어요.'); pair('덜 지치는 주기', '같은 인력으로 더 많은 주기');
+    caption('병원 편 · 결과', '확인 업무가 줄고 부하가 미리 보이면, 같은 인력과 시술실로 더 많은 주기를 차분하게 돌릴 수 있어요.');
     await stage('illo', 'cBusiness'); await wait(8000);
   } },
-  { t: '참고 자료', m: 'end', run: async () => {
+  { t: '참고 자료', run: async () => {
     caption('병원 편 · 참고 자료', '숫자는 공개된 연구와 자료에서 가져왔어요. 콘솔 수치는 예시예요.');
     await stage('illo', 'cSources'); await wait(6000);
   } }
